@@ -15,17 +15,16 @@
 # Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-""" This tool finds and gets the restraint repo based on the Operating System version"""
+""" This tool finds and gets the restraint repo based on the \
+ Operating System version"""
 
 import platform
-import sys
-import os
 from BeautifulSoup import BeautifulSoup 
 import urllib2
 import re
 import requests
 
-version=platform.dist()
+version = platform.dist()
 print  version
 reg = version[1:2]
 number = " ".join(reg)
