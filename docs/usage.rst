@@ -90,6 +90,11 @@ In your restraint.xml for multi host testing::
     <param name="MASTER" value="hostname1"/>
     <param name="MASTER" value="hostname2"/>
 
+In your restraint.xml if you have <task name="/ipa-server/master/ipa-cert">
+then, "/master/" gets replaced with the git_test_branch value from conf.
+However, having 'default' in git_test_branch will leave the restraint xml
+untouched.
+
 ::
 
     ~$ nexus --conf my.conf restraint --restraint-xml ipa-tests/restraint/ipa-sudo-rhel71-x86_64-bkr.xml
