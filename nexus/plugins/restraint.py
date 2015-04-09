@@ -114,11 +114,18 @@ class Restraint():
             logger.log.info("Using the default branch to run tests.")
         else:
             self.git_test_branch_url = self.git_repo_url + "?" + self.git_test_branch
+            self.git_test_branch_task = "/" + self.git_test_branch + "/"
 
             j = open(self.restraint_xml, 'r').read()
             m = j.replace(self.git_repo_url, self.git_test_branch_url)
             f = open(self.restraint_xml, 'w')
             f.write(m)
+            f.close()
+
+            j = open(self.restraint_xml, 'r').read()
+            n = j.replace("/master/", self.git_test_branch_task)
+            f = open(self.restraint_xml, 'w')
+            f.write(n)
             f.close()
             logger.log.info("Updating restraint xml to use %s branch" % self.git_test_branch)
 
