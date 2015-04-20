@@ -38,9 +38,13 @@ class Restraint():
         Install restraint rpms and start its service.
         """
 
+        subprocess.call(['yum', 'update', '-y', 'restraint-client'])
+        logger.log.info("Updating restraint-client in local system")
+
         logger.log.info("Checking platform.dist of %s" % host)
         ssh_c = SSHClient(hostname = host, username = \
                                   self.username, password = self.password)
+
         stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
                                                  print platform.dist()"')
         dist = stdout.read()
