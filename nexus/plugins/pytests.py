@@ -27,7 +27,7 @@ class Pytest():
 
         self.provisioner = options.provisioner
 
-        nodes = conf_dict['jenkins']['existing_nodes']
+        nodes = conf_dict['jenkins']['private_ips']
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
 
         if self.provisioner == "beaker":
