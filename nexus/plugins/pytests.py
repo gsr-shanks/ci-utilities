@@ -108,9 +108,11 @@ class Pytest():
 
         self.tests_cfg = conf_dict['pytest']['tests_cfg']
 
-        git_clone = "git clone"
-        get_tests = git_clone + conf_dict['git']['git_repo_url']
+        git_clone = "git clone "
+        self.git_repo_url = conf_dict['git']['git_repo_url']
+        get_tests = git_clone + self.git_repo_url
 
+        logger.log.info("git cloning %s on %s" % (self.git_repo_url, host))
         stdin, stdout, stderr = ssh_c.ExecuteCmd(get_tests)
         for line in stdout.read().splitlines(): logger.log.info(line)
 
