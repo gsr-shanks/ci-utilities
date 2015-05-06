@@ -192,7 +192,7 @@ class Pytest():
         self.pytest_junit_loc = conf_dict['pytest']['pytest_junit_loc']
 
         pytest_cmd = "py.test --junit-xml=" + self.pytest_junit_loc + \
-            "--multihost-config=" + self.tests_cfg + " " + self.tests_to_run
+            " --multihost-config=" + self.tests_cfg + " " + self.tests_to_run
 
         host = self.existing_nodes[0]
 
