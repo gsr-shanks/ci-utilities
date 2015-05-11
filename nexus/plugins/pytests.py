@@ -20,6 +20,7 @@ from scp import SCPClient
 from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
 from nexus.lib import logger
+from nexus.lib.ci_message import CI_MSG
 
 class Pytest():
 
@@ -27,18 +28,18 @@ class Pytest():
 
         self.provisioner = options.provisioner
 
-        nodes = conf_dict['jenkins']['private_ips']
-        self.existing_nodes = [item.strip() for item in nodes.split(',')]
-
         if self.provisioner == "beaker":
             self.username = conf_dict['beaker']['username']
             self.password = conf_dict['beaker']['password']
+            nodes = conf_dict['jenkins']['existing_nodes']
         elif self.provisioner == "openstack":
             self.username = conf_dict['openstack']['username']
             self.password = conf_dict['openstack']['password']
+            nodes = conf_dict['jenkins']['private_ips']
         else:
             logger.log.error("Unknown provisioner")
 
+        self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.workspace = conf_dict['jenkins']['workspace']
         self.jenkins_job_name = conf_dict['jenkins']['job_name']
         self.ssh_keys_priv = conf_dict['pytest']['ssh_keys_priv']
@@ -187,12 +188,43 @@ class Pytest():
                                 host, conf_dict) for host in \
                                 self.existing_nodes])
 
+
         self.tests_to_run = conf_dict['pytest']['tests_to_run']
         self.tests_cfg = conf_dict['pytest']['tests_cfg']
         self.pytest_junit_loc = conf_dict['pytest']['pytest_junit_loc']
 
-        pytest_cmd = "py.test --junit-xml=" + self.pytest_junit_loc + \
-            " --multihost-config=" + self.tests_cfg + " " + self.tests_to_run
+        ci_msg = CI_MSG()
+        ttypes = ci_msg.get_ci_msg_value('testtypes')
+        ttiers = ci_msg.get_ci_msg_value('testtiers')
+
+        patterns = []
+
+        if ttypes is None and ttiers is None:
+            logger.log.info("Both test-tier and test-type options are none in CI_MESSAGE")
+
+            pytest_cmd = "py.test --junit-xml=" + self.pytest_junit_loc + \
+                " --multihost-config=" + self.tests_cfg + " " + self.tests_to_run
+
+        else:
+            pytest_cmd = "py.test --junit-xml=" + self.pytest_junit_loc + \
+                " --multihost-config=" + self.tests_cfg + " " + self.tests_to_run
+
+            if ttypes is None:
+                logger.log.info("test-type is none in CI_MESSAGE")
+            else:
+                for item in ttypes:
+                    mystr = "-m" + " " + item
+                    patterns.append(mystr)
+
+            if ttiers is None:
+                logger.log.info("test-tier is none in CI_MESSAGE")
+            else:
+                for item in ttiers:
+                    mystr = "-m" + " " + item
+                    patterns.append(mystr)
+
+            pytest_patterns = " ".join(patterns)
+            pytest_cmd = pytest_cmd + " " + pytest_patterns
 
         host = self.existing_nodes[0]
 
