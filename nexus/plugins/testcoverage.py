@@ -32,7 +32,7 @@ class Testcoverage():
             self.username = conf_dict['beaker']['username']
             self.password = conf_dict['beaker']['password']
             nodes = conf_dict['jenkins']['existing_nodes']
-        elif: self.provisioner == "openstack":
+        elif self.provisioner == "openstack":
             self.username = conf_dict['openstack']['username']
             self.password = conf_dict['openstack']['password']
             nodes = conf_dict['jenkins']['private_ips']
