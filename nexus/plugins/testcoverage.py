@@ -40,9 +40,9 @@ class Testcoverage():
             logger.log.error("Unknown provisioner")
 
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
-        self.coverage_conf = conf_dict['pytests']['coverage_conf']
-        self.site_packages = conf_dict['pytests']['site_packages']
-        self.site_customize = conf_dict['pytests']['site_customize']
+        self.coverage_conf = conf_dict['coverage']['coverage_conf']
+        self.site_packages = conf_dict['coverage']['site_packages']
+        self.site_customize = conf_dict['coverage']['site_customize']
 
 
     def update_coverage_conf(self, options, conf_dict):
