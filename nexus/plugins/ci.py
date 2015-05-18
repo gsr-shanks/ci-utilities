@@ -18,6 +18,7 @@ from nexus.plugins.git import Git
 from nexus.plugins.restraint import Restraint
 from nexus.plugins.repos import Repos
 from nexus.plugins.pytests import Pytest
+from nexus.plugins.testcoverage import Testcoverage
 
 class CI():
 
@@ -44,9 +45,24 @@ class CI():
             pytest = Pytest(options, conf_dict)
             pytest.run_pytest(options, conf_dict)
 
+            if options.coverage is True:
+                coverage = Testcoverage(options, conf_dict)
+                coverage.run_coverage(options, conf_dict)
+                logger.log.info("Coverage option set.")
+            else:
+                logger.log.info("Coverage option not set.")
+
         elif self.provisioner == "openstack" and self.framework == "pytest":
+
             pytest = Pytest(options, conf_dict)
             pytest.run_pytest(options, conf_dict)
+
+            if options.coverage is True:
+                coverage = Testcoverage(options, conf_dict)
+                coverage.run_coverage(options, conf_dict)
+                logger.log.info("Coverage option set.")
+            else:
+                logger.log.info("Coverage option not set.")
 
         else:
             logger.log.error("Unknown provisioner or framework")

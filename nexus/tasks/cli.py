@@ -74,6 +74,7 @@ def create_parser():
     parser_ci.add_argument('--provisioner', help='Infra used for test systems \
                             provisioning')
     parser_ci.add_argument('--framework', help='Test automation framework')
+    parser_ci.add_argument('--coverage', action='store_true', help='Test automation coverage')
     parser_ci.add_argument('--project', help=argparse.SUPPRESS)
     parser_ci.add_argument('--repo', help=argparse.SUPPRESS)
     parser_ci.add_argument('--branch', help=argparse.SUPPRESS)
