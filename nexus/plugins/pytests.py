@@ -117,13 +117,6 @@ class Pytest():
         stdin, stdout, stderr = ssh_c.ExecuteCmd(get_tests)
         for line in stdout.read().splitlines(): logger.log.info(line)
 
-        #TODO mkdir and touch commands should be handled in automation
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('mkdir -p /root/multihost_tests')
-        for line in stdout.read().splitlines(): logger.log.info(line)
-
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('touch /root/multihost_tests/env.sh')
-        for line in stdout.read().splitlines(): logger.log.info(line)
-
 
         source = self.tests_cfg
         destination = self.tests_cfg
