@@ -13,7 +13,7 @@
 import os
 import sys
 import platform
-import subprocess
+from subprocess import Popen, PIPE, STDOUT
 from scp import SCPClient
 from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
@@ -121,13 +121,10 @@ class Testcoverage():
         scp.get(coverage_xml)
 
         remotepath = conf_dict['coverage']['coverage_html']
-        subprocess.call(['scp', '-r', 'root@', master, ':', remotepath, ' .'])
-
-
-    def run_coverage(self, options, conf_dict):
-
-        logger.log.info("Copying %s to %s on %s" % (source, destination, host)
-        ssh_c.CopyFiles(source, destination)
+        cmd = 'scp -r ' + master + ':' + remotepath + ' .'
+        p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+        output = p.stdout.read()
+        print output
 
 
     def run_coverage(self, options, conf_dict):
