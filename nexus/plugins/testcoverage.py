@@ -41,6 +41,7 @@ class Testcoverage():
 
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.coverage_conf = conf_dict['coverage']['coverage_conf']
+        self.coverage_dest = conf_dict['coverage']['coverage_dest']
         self.site_packages = conf_dict['coverage']['site_packages']
         self.site_customize = conf_dict['coverage']['site_customize']
 
@@ -54,11 +55,11 @@ class Testcoverage():
         f.close()
 
         master = self.existing_nodes[0]
-        ssh_c = SSHClient(hostname = host, username = \
+        ssh_c = SSHClient(hostname = master, username = \
                         self.username, password = self.password)
 
         source = self.coverage_conf
-        destination = self.coverage_conf
+        destination = self.coverage_dest
         logger.log.info("source file is %s" % source)
 
         ssh_c.CopyFiles(source, destination)
@@ -82,7 +83,7 @@ class Testcoverage():
         ssh_c = SSHClient(hostname = master, username = \
                         self.username, password = self.password)
 
-        coverage_html = "coverage html --rcfile=/root/multihost_tests/.coveragerc"
+        coverage_html = "coverage html --rcfile=/root/.coveragerc"
         stdout,stderr,exit_status = ssh_c.ExecuteScript(coverage_html)
         output = stdout.getvalue()
         error = stderr.getvalue()
@@ -93,9 +94,9 @@ class Testcoverage():
         else:
             print "Script output: ", output
 
-        coverage_cmd = "coverage report --rcfile=/root/multihost_tests/.coveragerc; \
-                        coverage xml --rcfile=/root/multihost_tests/.coveragerc; \
-                        coverage html --rcfile=/root/multihost_tests/.coveragerc"
+        coverage_cmd = "coverage report --rcfile=/root/.coveragerc; \
+                        coverage xml --rcfile=/root/.coveragerc; \
+                        coverage html --rcfile=/root/.coveragerc"
         stdout,stderr,exit_status = ssh_c.ExecuteScript(coverage_cmd)
         output = stdout.getvalue()
         error = stderr.getvalue()
@@ -107,16 +108,26 @@ class Testcoverage():
             print "Script output: ", output
 
 
-    #def get_reports(self, options, conf_dict):
-    #
-    #    master = self.existing_nodes[0]
-    #    ssh_c = SSHClient(hostname = master, username = \
-    #                    self.username, password = self.password)
-    #    remote_file = ["report", "xml", "html"]
+    def get_reports(self, options, conf_dict):
+
+        master = self.existing_nodes[0]
+        ssh_c = SSHClient(hostname = master, username = \
+                        self.username, password = self.password)
+        coverage_data = conf_dict['coverage']['coverage_data']
+        scp = SCPClient(ssh_c.get_transport())
+        scp.get(coverage_data)
+
+        coverage_html = conf_dict['coverage']['coverage_html']
+        scp = SCPClient(ssh_c.get_transport())
+        scp.get(coverage_html)
+
+        coverage_xml = conf_dict['coverage']['coverage_xml']
+        scp = SCPClient(ssh_c.get_transport())
+        scp.get(coverage_xml)
+
 
 
     def run_coverage(self, options, conf_dict):
 
-        self.update_coverage_conf()
-        self.copy_site_custom()
-        self.coverage_reports()
+        self.update_coverage_conf(options, conf_dict)
+        self.copy_site_custom(options, conf_dict)

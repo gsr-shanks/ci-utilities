@@ -117,7 +117,6 @@ class Pytest():
         stdin, stdout, stderr = ssh_c.ExecuteCmd(get_tests)
         for line in stdout.read().splitlines(): logger.log.info(line)
 
-
         source = self.tests_cfg
         destination = self.tests_cfg
 
@@ -126,8 +125,9 @@ class Pytest():
 
         ssh_c.CopyFiles(source, destination)
 
+        logger.log.info("Installing ipa-pytests on all nodes.")
         self.tests_base = conf_dict['pytest']['tests_base']
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('cd' + self.tests_base  + '; python setup.py install')
+        stdin, stdout, stderr = ssh_c.ExecuteCmd('cd ' + self.tests_base  + '; python setup.py install')
         for line in stdout.read().splitlines(): logger.log.info(line)
 
     def copy_testout_junit(self, options, conf_dict):

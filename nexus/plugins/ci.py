@@ -42,8 +42,6 @@ class CI():
             restraint.run_restraint(options, conf_dict)
 
         elif self.provisioner == "beaker" and self.framework == "pytest":
-            pytest = Pytest(options, conf_dict)
-            pytest.run_pytest(options, conf_dict)
 
             if options.coverage is True:
                 coverage = Testcoverage(options, conf_dict)
@@ -51,18 +49,37 @@ class CI():
                 logger.log.info("Coverage option set.")
             else:
                 logger.log.info("Coverage option not set.")
+
+            pytest = Pytest(options, conf_dict)
+            pytest.run_pytest(options, conf_dict)
+
+	        if options.coverage is True:
+                logger.log.info("Get coverage report")
+                coverage = Testcoverage(options, conf_dict)
+                coverage.coverage_reports(options, conf_dict)
+                coverage.get_reports(options, conf_dict)
+            else:
+                logger.log.info("No coverage report since option not set")
 
         elif self.provisioner == "openstack" and self.framework == "pytest":
 
-            pytest = Pytest(options, conf_dict)
-            pytest.run_pytest(options, conf_dict)
-
             if options.coverage is True:
                 coverage = Testcoverage(options, conf_dict)
                 coverage.run_coverage(options, conf_dict)
                 logger.log.info("Coverage option set.")
             else:
                 logger.log.info("Coverage option not set.")
+
+            pytest = Pytest(options, conf_dict)
+            pytest.run_pytest(options, conf_dict)
+
+            if options.coverage is True:
+                logger.log.info("Get coverage report since option not set")
+                coverage = Testcoverage(options, conf_dict)
+                coverage.coverage_reports(options, conf_dict)
+                coverage.get_reports(options, conf_dict)
+            else:
+                logger.log.info("No coverage report since option not set")
 
         else:
             logger.log.error("Unknown provisioner or framework")
