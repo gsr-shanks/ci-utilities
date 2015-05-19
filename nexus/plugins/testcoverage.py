@@ -64,8 +64,7 @@ class Testcoverage():
                         self.username, password = self.password)
 
         source = self.site_customize
-        #FIXME join path self.site_packages + sitecustomize.py
-        destination = "/usr/lib64/python2.7/site-packages/sitecustomize.py"
+        destination = os.path.join(self.site_packages, 'sitecustomize.py')
         logger.log.info("source file is %s" % source)
         ssh_c.CopyFiles(source, destination)
 
