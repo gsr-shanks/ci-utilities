@@ -19,7 +19,6 @@ from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
 from nexus.lib import logger
 from nexus.lib.ci_message import CI_MSG
-from stat import S_ISDIR
 
 
 class Testcoverage():
@@ -121,10 +120,8 @@ class Testcoverage():
         scp = SCPClient(ssh_c.get_transport())
         scp.get(coverage_xml)
 
-        localpath = conf_dict['coverage']['coverage_html']
         remotepath = conf_dict['coverage']['coverage_html']
-        logger.log.info("Copying %s to %s on %s" % (source, destination, master)
-        ssh_c.GetFiles(remotepath, localpath)
+        subprocess.call(['scp', '-r', 'root@', master, ':', remotepath, ' .'])
 
 
     def run_coverage(self, options, conf_dict):
