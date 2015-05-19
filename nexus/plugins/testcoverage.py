@@ -40,7 +40,6 @@ class Testcoverage():
 
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.coverage_conf = conf_dict['coverage']['coverage_conf']
-        self.coverage_dest = conf_dict['coverage']['coverage_dest']
         self.site_packages = conf_dict['coverage']['site_packages']
         self.site_customize = conf_dict['coverage']['site_customize']
 
@@ -57,12 +56,6 @@ class Testcoverage():
         ssh_c = SSHClient(hostname = master, username = \
                         self.username, password = self.password)
 
-        source = self.coverage_conf
-        destination = self.coverage_dest
-        logger.log.info("source file is %s" % source)
-
-        ssh_c.CopyFiles(source, destination)
-
     def copy_site_custom(self, options, conf_dict):
 
         master = self.existing_nodes[0]
@@ -70,6 +63,7 @@ class Testcoverage():
                         self.username, password = self.password)
 
         source = self.site_customize
+        #FIXME join path self.site_packages + sitecustomize.py
         destination = "/usr/lib64/python2.7/site-packages/sitecustomize.py"
         logger.log.info("source file is %s" % source)
 
@@ -93,9 +87,9 @@ class Testcoverage():
         else:
             print "Script output: ", output
 
-        coverage_cmd = "coverage report --rcfile=/root/.coveragerc; \
-                        coverage xml --rcfile=/root/.coveragerc; \
-                        coverage html --rcfile=/root/.coveragerc"
+        coverage_cmd = "coverage report --rcfile=" + self.converage_conf + ";" \
+                        "coverage xml --rcfile=" + self.converage_conf + ";" \
+                        "coverage html --rcfile=" + self.converage_conf
         stdout,stderr,exit_status = ssh_c.ExecuteScript(coverage_cmd)
         output = stdout.getvalue()
         error = stderr.getvalue()
