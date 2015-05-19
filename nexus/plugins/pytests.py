@@ -21,6 +21,7 @@ from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
 from nexus.lib import logger
 from nexus.lib.ci_message import CI_MSG
+from nexus.plugins.testcoverage import Testcoverage
 
 class Pytest():
 
@@ -181,6 +182,12 @@ class Pytest():
                                 host, conf_dict) for host in \
                                 self.existing_nodes])
 
+        if options.coverage is True:
+            coverage = Testcoverage(options, conf_dict)
+            coverage.run_coverage(options, conf_dict)
+            logger.log.info("Coverage option set.")
+        else:
+            logger.log.info("Coverage option not set.")
 
         self.tests_to_run = conf_dict['pytest']['tests_to_run']
         self.tests_cfg = conf_dict['pytest']['tests_cfg']
