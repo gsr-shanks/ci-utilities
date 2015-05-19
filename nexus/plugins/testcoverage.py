@@ -91,9 +91,9 @@ class Testcoverage():
         else:
             print "Script output: ", output
 
-        coverage_cmd = "coverage report --rcfile=" + self.converage_conf + ";" \
-                        "coverage xml --rcfile=" + self.converage_conf + ";" \
-                        "coverage html --rcfile=" + self.converage_conf
+        coverage_cmd = "coverage report --rcfile=" + self.coverage_dest + ";" \
+                        "coverage xml --rcfile=" + self.coverage_dest + ";" \
+                        "coverage html --rcfile=" + self.coverage_dest
         stdout,stderr,exit_status = ssh_c.ExecuteScript(coverage_cmd)
         output = stdout.getvalue()
         error = stderr.getvalue()
