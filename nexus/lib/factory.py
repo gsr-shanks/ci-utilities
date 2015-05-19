@@ -141,3 +141,14 @@ class SSHClient(paramiko.SSHClient):
         sftp = paramiko.SFTPClient.from_transport(Transport)
         FileAttributes = sftp.put(source, destination)
         return FileAttributes
+
+    def GetFiles(self,remotepath,localpath):
+        """ This Function copies files to local nodes from destination
+        @param:
+        remotepath: name of the file to be copied
+        localpath: name of file to be saved
+        """
+        Transport = self.get_transport()
+        sftp = paramiko.SFTPClient.from_transport(Transport)
+        FileAttributes = sftp.get(remotepath, localpath)
+        return FileAttributes
