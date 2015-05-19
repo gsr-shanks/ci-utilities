@@ -117,14 +117,13 @@ class Testcoverage():
         scp = SCPClient(ssh_c.get_transport())
         scp.get(coverage_data)
 
-        coverage_html = conf_dict['coverage']['coverage_html']
-        scp = SCPClient(ssh_c.get_transport())
-        scp.get(coverage_html)
-
         coverage_xml = conf_dict['coverage']['coverage_xml']
         scp = SCPClient(ssh_c.get_transport())
         scp.get(coverage_xml)
 
+        coverage_html = conf_dict['coverage']['coverage_html']
+        logger.log.info("Copying %s to %s on %s" % (source, destination, host)
+        ssh_c.CopyFiles(coverage_html, coverage_html)
 
 
     def run_coverage(self, options, conf_dict):
