@@ -9,8 +9,8 @@ def readme():
 
 setup(
     name='nexus',
-    version='1.0',
-    description='Nexus - Bridging CI & Automation',
+    version='0.4',
+    description='Nexus - Bridging Tools & Automation for CI',
     author='Gowrishankar Rajaiyan',
     author_email='gsr@redhat.com',
     license='GPLv2',
