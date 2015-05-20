@@ -60,7 +60,7 @@ class CI():
             pytest.run_pytest(options, conf_dict)
 
             if options.coverage is True:
-                logger.log.info("Get coverage report since option not set")
+                logger.log.info("Get coverage report")
                 coverage = Testcoverage(options, conf_dict)
                 coverage.coverage_reports(options, conf_dict)
                 coverage.get_reports(options, conf_dict)
