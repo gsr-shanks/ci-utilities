@@ -204,10 +204,12 @@ class Pytest():
 
             pytest_cmd = "py.test --junit-xml=" + self.pytest_junit_loc + \
                 " --multihost-config=" + self.tests_cfg + " " + self.tests_to_run
+            logger.log.info(pytest_cmd)
 
         else:
             pytest_cmd = "py.test --junit-xml=" + self.pytest_junit_loc + \
                 " --multihost-config=" + self.tests_cfg + " " + self.tests_to_run
+            logger.log.info(pytest_cmd)
 
             if ttypes is None:
                 logger.log.info("test-type is none in CI_MESSAGE")
@@ -225,6 +227,7 @@ class Pytest():
 
             pytest_patterns = " ".join(patterns)
             pytest_cmd = pytest_cmd + " " + pytest_patterns
+            logger.log.info(pytest_cmd)
 
         host = self.existing_nodes[0]
 
