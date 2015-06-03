@@ -51,6 +51,8 @@ class Pytest():
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
 
     def deploy_ssh_keys(self, host, conf_dict):
+        """ Copy ssh keys to all existing nodes """
+
         ssh_c = SSHClient(hostname = host, username = \
                         self.username, password = self.password)
 
@@ -81,6 +83,8 @@ class Pytest():
 
 
     def copy_extras_repo(self, host, conf_dict):
+        """ Use yum-config-manager to create repo using a repo url """
+
         ssh_c = SSHClient(hostname = host, username = \
                         self.username, password = self.password)
 
@@ -93,6 +97,8 @@ class Pytest():
         for line in stdout.read().splitlines(): logger.log.info(line)
 
     def install_prereqs(self, host, conf_dict):
+        """ Install pre-reqs for pytest """
+
         ssh_c = SSHClient(hostname = host, username = \
                         self.username, password = self.password)
 
@@ -105,6 +111,8 @@ class Pytest():
         for line in stdout.read().splitlines(): logger.log.info(line)
 
     def pytest_setup(self, host, conf_dict):
+        """ setup pytest automation """
+
         ssh_c = SSHClient(hostname = host, username = \
                         self.username, password = self.password)
 
@@ -126,12 +134,14 @@ class Pytest():
 
         ssh_c.CopyFiles(source, destination)
 
-        logger.log.info("Installing ipa-pytests on all nodes.")
+        logger.log.info("Installing pytests on all nodes.")
         self.tests_base = conf_dict['pytest']['tests_base']
         stdin, stdout, stderr = ssh_c.ExecuteCmd('cd ' + self.tests_base  + '; python setup.py install')
         for line in stdout.read().splitlines(): logger.log.info(line)
 
     def copy_testout_junit(self, options, conf_dict):
+        """ Copy junit file from first node to Jenkins slave """
+
         master = self.existing_nodes[0]
         ssh_c = SSHClient(hostname = master, username = \
                         self.username, password = self.password)
@@ -141,6 +151,7 @@ class Pytest():
         scp.get(remote_file)
 
     def run_pytest(self, options, conf_dict):
+        """ Run pytest command using the marker if provided """
 
         threads = Threader()
 
