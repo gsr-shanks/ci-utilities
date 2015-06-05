@@ -62,6 +62,17 @@ class Restraint():
         stdin, stdout, stderr = ssh_c.ExecuteCmd(remove_cmd)
         for line in stdout.read().splitlines(): logger.log.info(line)
 
+        """
+        Check if OS is rhel5.11 and modify yum.conf to install
+        architecture specific packages
+        """
+        if dist[1] == "5.11":
+            yumconf = "/etc/yum.conf"
+            yumconf_append = "echo 'multilib_policy = best' >> " + yumconf
+            logger.log.info("%s to %s" % (host, yumconf_append))
+            stdin, stdout, stderr = ssh_c.ExecuteCmd(yumconf_append)
+            for line in stdout.read().splitlines(): logger.log.info(line)
+
         restraint_install_rpms = conf_dict['restraint']['install_rpm']
         install_cmd = "yum install -y " + restraint_install_rpms
         logger.log.info("%s to %s" % (host, install_cmd))
