@@ -69,7 +69,8 @@ class Restraint():
         if dist[1] == "5.11":
             yumconf = "/etc/yum.conf"
             yumconf_append = "echo 'multilib_policy = best' >> " + yumconf
-            logger.log.info("%s to %s" % (host, yumconf_append))
+            logger.log.info("%s is detected as 5.11. Setting multilib_policy \
+                            best in /etc/yum.conf" % host)
             stdin, stdout, stderr = ssh_c.ExecuteCmd(yumconf_append)
             for line in stdout.read().splitlines(): logger.log.info(line)
 
