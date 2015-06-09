@@ -25,6 +25,7 @@ class Repos():
         self.password = conf_dict['beaker']['password']
         nodes = conf_dict['jenkins']['existing_nodes']
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
+        repos_section = "repos"
 
         self.jenkins_job_name = conf_dict['jenkins']['job_name']
         self.brew_tag = conf_dict['brew']['brew_tag']
@@ -165,6 +166,24 @@ class Repos():
             logger.log.info("%s is not for %s dist" % (self.static_repo_url, dist))
 
 
+    def create_repos_section(self, options, conf_dict):
+        """
+        Blindly use yum-config-manager to create repos for
+        urls provided in repos section
+        """
+
+        ssh_c = SSHClient(hostname = host, username = \
+                self.username, password = self.password)
+
+        a = dict(config.items(repos_section))
+        for key, value in a.iteritems():
+
+        logger.log.info("Adding repo %s to %s" % (value, host))
+        copy_static_repo_cmd = "yum-config-manager --add-repo " + value
+
+        stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_static_repo_cmd)
+
+
     def run_repo_setup(self, options, conf_dict):
         """
         run async_updates repo function using threads per host.
@@ -189,12 +208,14 @@ class Repos():
                                    self.existing_nodes])
 
         if "z-candidate" in self.brew_tag:
-            logger.log.info("brew tag is for z-candidate, hence picking batched repo from conf.")
+            logger.log.info("brew tag is for z-candidate, hence picking \
+                            batched repo from conf.")
             threads.gather_results([threads.get_item(self.copy_async_updates_repo, \
                                     host, conf_dict) for host in \
                                     self.existing_nodes])
         else:
-            logger.log.info("brew tag is not for z-candidate, hence not picking any batched repo from conf.")
+            logger.log.info("brew tag is not for z-candidate, hence not \
+                            picking any batched repo from conf.")
 
         if self.task_repo_url and self.static_repo_url:
             logger.log.info("Check and copy task_repo if dist is appropriate")
@@ -211,3 +232,12 @@ class Repos():
                                     self.existing_nodes])
         else:
             logger.log.info("STATIC_REPO_URLS env variable not found")
+
+        if config.has_section(repos_section):
+            logger.log.info("repos section detected.")
+
+            threads.gather_results([threads.get_item(create_repos_section, \
+                                    host, conf_dict) for host in \
+                                    self.existing_nodes])
+        else:
+            logger.log.info("repos section not found.")

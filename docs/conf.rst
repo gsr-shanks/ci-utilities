@@ -10,6 +10,7 @@ Config sections
 * `triggers`_:
 * `restraint`_:
 * `restraint_jobs`_:
+* `repos`_:
 
 beaker
 ------
@@ -180,7 +181,13 @@ restraint_jobs
 restraint_jobs section maps the Jenkins environments' JOB_NAME to the
 restraint xml located in restraint sections job_xml_loc. Nexus gets the job
 name from enrionment variable and looks for the appropriate restraint xml
-file. 
+file.
 
 Cheat: You may skip mapping JOB_NAME to restraint xml in this section by
 exporting environment variable as WHAT_TEST="restraint xml file name"
+
+repos
+-----
+
+Any value you have in this section, is used as baseurl while creating yum repo
+using yum-config-manager command in all the existing nodes.
