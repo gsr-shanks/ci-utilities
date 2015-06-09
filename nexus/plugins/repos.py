@@ -128,7 +128,7 @@ class Repos():
         dist = dist.split()
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
-        if dist in self.static_repo_url:
+        if dist[1] in self.static_repo_url:
             logger.log.info("Adding task_repo %s to %s" % (self.task_repo_url, host))
             copy_task_repo_cmd = "yum-config-manager --add-repo " + self.task_repo_url
 
@@ -155,7 +155,7 @@ class Repos():
         dist = dist.split()
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
-        if dist in self.static_repo_url:
+        if dist[1] in self.static_repo_url:
             logger.log.info("Adding static_repo %s to %s" % (self.static_repo_url, host))
             copy_static_repo_cmd = "yum-config-manager --add-repo " + self.static_repo_url
 
