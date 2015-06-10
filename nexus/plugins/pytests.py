@@ -126,6 +126,18 @@ class Pytest():
         stdin, stdout, stderr = ssh_c.ExecuteCmd(get_tests)
         for line in stdout.read().splitlines(): logger.log.info(line)
 
+        self.git_refspec = os.environ.get("GERRIT_REFSPEC")
+        if self.git_refspec:
+            self.gerrit_repo_url = conf_dict['gerrit']['gerrit_repo_url']
+            self.git_project = conf_dict['git']['git_project']
+            git_pull_cmd = "cd " + self.git_project + "; " + "git pull " + self.gerrit_repo_url + " " + self.git_refspec + "; cd .."
+            logger.log.info("Git pull %s" % self.git_refspec)
+
+            stdin, stdout, stderr = ssh_c.ExecuteCmd(git_pull_cmd)
+            for line in stdout.read().splitlines(): logger.log.info(line)
+        else:
+            logger.log.info("GERRIT REFSPEC is empty.")
+
         source = self.tests_cfg
         destination = self.tests_cfg
 
