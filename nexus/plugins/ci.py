@@ -43,6 +43,9 @@ class CI():
 
         elif self.provisioner == "beaker" and self.framework == "pytest":
 
+            repo = Repos(options, conf_dict)
+            repo.run_repo_setup(options, conf_dict)
+
             pytest = Pytest(options, conf_dict)
             pytest.run_pytest(options, conf_dict)
 
@@ -55,6 +58,9 @@ class CI():
                 logger.log.info("No coverage report since option not set")
 
         elif self.provisioner == "openstack" and self.framework == "pytest":
+
+            repo = Repos(options, conf_dict)
+            repo.run_repo_setup(options, conf_dict)
 
             pytest = Pytest(options, conf_dict)
             pytest.run_pytest(options, conf_dict)
