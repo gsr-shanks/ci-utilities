@@ -178,10 +178,10 @@ class Repos():
         a = dict(config.items(repos_section))
         for key, value in a.iteritems():
 
-        logger.log.info("Adding repo %s to %s" % (value, host))
-        copy_static_repo_cmd = "yum-config-manager --add-repo " + value
+            logger.log.info("Adding repo %s to %s" % (value, host))
+            copy_static_repo_cmd = "yum-config-manager --add-repo " + value
 
-        stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_static_repo_cmd)
+            stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_static_repo_cmd)
 
 
     def run_repo_setup(self, options, conf_dict):
