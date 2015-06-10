@@ -4,6 +4,7 @@ Config sections
 * `beaker`_:
 * `jenkins`_:
 * `git`_:
+* `gerrit`_:
 * `errata`_:
 * `brew`_:
 * `async_repos`_:
@@ -70,6 +71,19 @@ intend to clone it everytime for few CI related files.
 git_test_branch is used to update the fetch URL in restraint xml's. 'default'
 leaves the restraint xml untouched, else the branch is appended in fetch URL.
 
+
+gerrit
+------
+
+::
+
+    [gerrit]
+    gerrit_repo_url = https://foo.bar.com/gerrit/ipa-pytests
+
+
+If GERRIT_REFSPEC is available in environment as variable then it is git
+pulled on top of the cloned repository. This is useful if you plan to test
+your patchset before merging it.
 
 errata
 ------
