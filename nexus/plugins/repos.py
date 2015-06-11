@@ -25,7 +25,7 @@ class Repos():
         self.password = conf_dict['beaker']['password']
         nodes = conf_dict['jenkins']['existing_nodes']
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
-        repos_section = "repos"
+        self.repos_section = 'repos'
 
         self.jenkins_job_name = conf_dict['jenkins']['job_name']
         self.brew_tag = conf_dict['brew']['brew_tag']
@@ -112,7 +112,7 @@ class Repos():
             logger.log.error("%s key for async_updates_url does not exists in conf." % e)
 
 
-    def copy_task_repo(self, options, conf_dict):
+    def copy_task_repo(self, host, conf_dict):
         """
         Create TASK_REPO_URLS repo conf
         """
@@ -139,7 +139,7 @@ class Repos():
             logger.log.info("TASK_REPO_URLS env variable not found")
 
 
-    def copy_static_repo(self, options, conf_dict):
+    def copy_static_repo(self, host, conf_dict):
         """
         Create STATIC_REPO_URLS repo conf
         """
@@ -166,7 +166,7 @@ class Repos():
             logger.log.info("%s is not for %s dist" % (self.static_repo_url, dist))
 
 
-    def create_repos_section(self, options, conf_dict):
+    def create_repos_section(self, host, conf_dict):
         """
         Blindly use yum-config-manager to create repos for
         urls provided in repos section
@@ -175,7 +175,7 @@ class Repos():
         ssh_c = SSHClient(hostname = host, username = \
                 self.username, password = self.password)
 
-        a = dict(config.items(repos_section))
+        a = dict(config.items(self.repos_section))
         for key, value in a.iteritems():
 
             logger.log.info("Adding repo %s to %s" % (value, host))
@@ -219,7 +219,7 @@ class Repos():
 
         if self.task_repo_url and self.static_repo_url:
             logger.log.info("Check and copy task_repo if dist is appropriate")
-            threads.gather_results([threads.get_item(copy_task_repo, \
+            threads.gather_results([threads.get_item(self.copy_task_repo, \
                                     host, conf_dict) for host in \
                                     self.existing_nodes])
         else:
@@ -227,16 +227,15 @@ class Repos():
 
         if self.static_repo_url:
             logger.log.info("Check and copy static_repo if dist is appropriate")
-            threads.gather_results([threads.get_item(copy_static_repo, \
+            threads.gather_results([threads.get_item(self.copy_static_repo, \
                                     host, conf_dict) for host in \
                                     self.existing_nodes])
         else:
             logger.log.info("STATIC_REPO_URLS env variable not found")
 
-        if config.has_section(repos_section):
+        if conf_dict.has_key('repos'):
             logger.log.info("repos section detected.")
-
-            threads.gather_results([threads.get_item(create_repos_section, \
+            threads.gather_results([threads.get_item(self.create_repos_section, \
                                     host, conf_dict) for host in \
                                     self.existing_nodes])
         else:

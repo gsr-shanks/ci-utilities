@@ -76,7 +76,7 @@ class SSHClient(paramiko.SSHClient):
         paramiko.SSHClient.__init__(self)
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.connect(self.hostname, port=self.port, username=self.username, password=self.password, timeout=30)
+            self.connect(self.hostname, port=self.port, username=self.username, password=self.password, timeout=60, gss_auth=False)
         except (paramiko.AuthenticationException, paramiko.SSHException, socket.error):
             raise
 
