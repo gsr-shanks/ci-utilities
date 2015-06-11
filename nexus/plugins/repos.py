@@ -175,8 +175,8 @@ class Repos():
         ssh_c = SSHClient(hostname = host, username = \
                 self.username, password = self.password)
 
-        a = dict(config.items(self.repos_section))
-        for key, value in a.iteritems():
+        repo_section_name = conf_dict[self.repos_section]
+        for key, value in repo_section_name.iteritems():
 
             logger.log.info("Adding repo %s to %s" % (value, host))
             copy_static_repo_cmd = "yum-config-manager --add-repo " + value
