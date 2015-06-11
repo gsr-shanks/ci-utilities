@@ -130,7 +130,8 @@ class Pytest():
         if self.git_refspec:
             self.gerrit_repo_url = conf_dict['gerrit']['gerrit_repo_url']
             self.git_project = conf_dict['git']['git_project']
-            git_pull_cmd = "cd " + self.git_project + "; " + "git pull " + self.gerrit_repo_url + " " + self.git_refspec + "; cd .."
+            git_pull_cmd = "cd " + self.git_project + "; " + "env GIT_SSL_NO_VERIFY=true git pull " \
+                            + self.gerrit_repo_url + " " + self.git_refspec + "; cd .."
             logger.log.info("Git pull %s" % self.git_refspec)
 
             stdin, stdout, stderr = ssh_c.ExecuteCmd(git_pull_cmd)
