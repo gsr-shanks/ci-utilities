@@ -226,7 +226,7 @@ class Pytest():
         if ttypes is None and ttiers is None:
             logger.log.info("Both test-tier and test-type options are none in CI_MESSAGE")
 
-            pytest_cmd = "py.test --junit-xml=" + self.pytest_junit_loc + \
+            pytest_cmd = "py.test -v --color=yes --junit-xml=" + self.pytest_junit_loc + \
                 " --multihost-config=" + self.tests_cfg + " " + self.tests_to_run
             logger.log.info(pytest_cmd)
 
