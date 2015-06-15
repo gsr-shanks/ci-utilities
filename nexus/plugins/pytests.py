@@ -163,6 +163,20 @@ class Pytest():
         scp = SCPClient(ssh_c.get_transport())
         scp.get(remote_file)
 
+        # Executing script that would convert the test case name in junit
+        # output xml to use docstrings.
+
+        self.junit_convert_script = conf_dict['pytests']['junit_convert_script']
+        self.junit_new_out = conf_dict['pytests']['pytest_new_junit_loc']
+        self.team = conf_dict['pytests']['team']
+
+        massage_junit = "python " + self.junit_convert_script + " -i " + \
+                        remote_file + " -o " + self.junit_new_out + " -t " + self.team
+
+        scp = SCPClient(ssh_c.get_transport())
+        scp.get(self.junit_new_out)
+
+
     def run_pytest(self, options, conf_dict):
         """ Run pytest command using the marker if provided """
 
