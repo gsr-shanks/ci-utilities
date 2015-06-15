@@ -166,9 +166,9 @@ class Pytest():
         # Executing script that would convert the test case name in junit
         # output xml to use docstrings.
 
-        self.junit_convert_script = conf_dict['pytests']['junit_convert_script']
-        self.junit_new_out = conf_dict['pytests']['pytest_new_junit_loc']
-        self.team = conf_dict['pytests']['team']
+        self.junit_convert_script = conf_dict['pytest']['junit_convert_script']
+        self.junit_new_out = conf_dict['pytest']['pytest_new_junit_loc']
+        self.team = conf_dict['pytest']['team']
 
         massage_junit = "python " + self.junit_convert_script + " -i " + \
                         remote_file + " -o " + self.junit_new_out + " -t " + self.team
