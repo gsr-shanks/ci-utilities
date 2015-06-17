@@ -117,15 +117,8 @@ class Repos():
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
-        ssh_c = SSHClient(hostname = host, username = \
-                                  self.username, password = self.password)
+        dist = Platform(host, username, password)
 
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
-                                                 print platform.dist()"')
-        dist = stdout.read()
-        dist = str(dist).replace('(','').replace(')','').replace("'", "").\
-               replace(',','')
-        dist = dist.split()
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
         if dist[1] in self.static_repo_url:
@@ -144,15 +137,8 @@ class Repos():
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
-        ssh_c = SSHClient(hostname = host, username = \
-                                  self.username, password = self.password)
+        dist = Platform(host, username, password)
 
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
-                                                 print platform.dist()"')
-        dist = stdout.read()
-        dist = str(dist).replace('(','').replace(')','').replace("'", "").\
-               replace(',','')
-        dist = dist.split()
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
         if dist[1] in self.static_repo_url:
