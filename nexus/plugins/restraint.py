@@ -18,6 +18,7 @@ import subprocess
 import shutil
 from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
+from nexus.lib.factory import Platform
 from nexus.lib import logger
 
 class Restraint():
@@ -42,15 +43,8 @@ class Restraint():
         logger.log.info("Updating restraint-client in local system")
 
         logger.log.info("Checking platform.dist of %s" % host)
-        ssh_c = SSHClient(hostname = host, username = \
-                                  self.username, password = self.password)
+        dist = Platform(host, username, password)
 
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
-                                                 print platform.dist()"')
-        dist = stdout.read()
-        dist = str(dist).replace('(','').replace(')','').replace("'", "").\
-               replace(',','')
-        dist = dist.split()
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
         repo_out = "/etc/yum.repos.d/restraint.repo"
 

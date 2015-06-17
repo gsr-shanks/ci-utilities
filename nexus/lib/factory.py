@@ -10,6 +10,7 @@ import paramiko
 import socket
 import argparse
 import StringIO
+import platform
 
 PARAMIKO_VERSION = (int(paramiko.__version__.split('.')[0]), int(paramiko.__version__.split('.')[1]))
 
@@ -152,3 +153,34 @@ class SSHClient(paramiko.SSHClient):
         sftp = paramiko.SFTPClient.from_transport(Transport)
         FileAttributes = sftp.get(remotepath, localpath)
         return FileAttributes
+
+class Platform:
+    """ This class will check the OS distribution and architecture
+    """
+    def __init__(self, host, username, password):
+        self.host = host
+        self.username = username
+        self.password = password
+
+        if port == None:
+            self.port = 22
+        else:
+            self.port = port
+
+        ssh_c = SSHClient(hostname = self.host, username = \
+                                  self.username, password = self.password)
+
+    def GetDist(self):
+        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
+                                                 print platform.dist()"')
+        dist = stdout.read()
+        dist = str(dist).replace('(','').replace(')','').replace("'", "").\
+               replace(',','')
+        dist = dist.split()
+        return dist
+
+    def GetArch(self):
+        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
+                                                 print platform.machine()"')
+        arch = stdout.read()
+        return arch
