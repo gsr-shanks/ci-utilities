@@ -15,6 +15,7 @@ import sys
 import platform
 from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
+from nexus.lib.factory import Platform
 from nexus.lib import logger
 
 class Repos():
@@ -62,27 +63,25 @@ class Repos():
         source = self.build_repo_file
         destination = "/etc/yum.repos.d/" + source
 
-        logger.log.info("source file is %s" % source)
-        logger.log.info("destination file is %s" % destination)
+        dist = Platform(host, username, password)
+        distver = dist.replace('.','')
+        if distver in self.build_repo_file:
+            logger.log.info("source file is %s" % source)
+            logger.log.info("destination file is %s" % destination)
 
-        ssh_c = SSHClient(hostname = host, username = \
-                                  self.username, password = self.password)
-        ssh_c.CopyFiles(source, destination)
-
+            ssh_c = SSHClient(hostname = host, username = \
+                                      self.username, password = self.password)
+            ssh_c.CopyFiles(source, destination)
+        else:
+            logger.log.info("destination is %s" % dist)
+            logger.log.info("Not adding repo file to %s" % destination)
 
     def copy_async_updates_repo(self, host, conf_dict):
         """copy the async updates repo to all the existing nodes"""
 
         try:
             logger.log.info("Checking platform.dist of %s to get the right batched repo" % host)
-            ssh_c = SSHClient(hostname = host, username = \
-                                      self.username, password = self.password)
-            stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
-                                                     print platform.dist()"')
-            dist = stdout.read()
-            dist = str(dist).replace('(','').replace(')','').replace("'", "").\
-                   replace(',','')
-            dist = dist.split()
+            dist = Platform(host, username, password)
 
             logger.log.info("Platform distribution for host %s is %s" % (host, dist))
             self.async_updates_url = conf_dict['async_repos'][dist[1]]
@@ -118,15 +117,8 @@ class Repos():
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
-        ssh_c = SSHClient(hostname = host, username = \
-                                  self.username, password = self.password)
+        dist = Platform(host, username, password)
 
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
-                                                 print platform.dist()"')
-        dist = stdout.read()
-        dist = str(dist).replace('(','').replace(')','').replace("'", "").\
-               replace(',','')
-        dist = dist.split()
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
         if dist[1] in self.static_repo_url:
@@ -145,15 +137,8 @@ class Repos():
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
-        ssh_c = SSHClient(hostname = host, username = \
-                                  self.username, password = self.password)
+        dist = Platform(host, username, password)
 
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
-                                                 print platform.dist()"')
-        dist = stdout.read()
-        dist = str(dist).replace('(','').replace(')','').replace("'", "").\
-               replace(',','')
-        dist = dist.split()
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
         if dist[1] in self.static_repo_url:
