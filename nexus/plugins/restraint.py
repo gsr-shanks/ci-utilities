@@ -43,7 +43,7 @@ class Restraint():
         logger.log.info("Updating restraint-client in local system")
 
         logger.log.info("Checking platform.dist of %s" % host)
-        dist = Platform(host, username, password)
+        dist = Platform(host, self.username, self.password)
 
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
         repo_out = "/etc/yum.repos.d/restraint.repo"
