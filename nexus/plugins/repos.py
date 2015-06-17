@@ -63,7 +63,7 @@ class Repos():
         source = self.build_repo_file
         destination = "/etc/yum.repos.d/" + source
 
-        dist = Platform(host, username, password)
+        dist = Platform(host, self.username, self.password)
         distver = dist.replace('.','')
         if distver in self.build_repo_file:
             logger.log.info("source file is %s" % source)
@@ -81,7 +81,7 @@ class Repos():
 
         try:
             logger.log.info("Checking platform.dist of %s to get the right batched repo" % host)
-            dist = Platform(host, username, password)
+            dist = Platform(host, self.username, self.password)
 
             logger.log.info("Platform distribution for host %s is %s" % (host, dist))
             self.async_updates_url = conf_dict['async_repos'][dist[1]]
@@ -117,7 +117,7 @@ class Repos():
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
-        dist = Platform(host, username, password)
+        dist = Platform(host, self.username, self.password)
 
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
@@ -137,7 +137,7 @@ class Repos():
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
-        dist = Platform(host, username, password)
+        dist = Platform(host, self.username, self.password)
 
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
