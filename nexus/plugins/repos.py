@@ -63,8 +63,9 @@ class Repos():
         source = self.build_repo_file
         destination = "/etc/yum.repos.d/" + source
 
-        dist = Platform(host, self.username, self.password)
-        distver = dist.replace('.','')
+        pltfrm = Platform(host, self.username, self.password)
+        dist = pltfrm.GetDist()
+        distver = str(dist[1]).replace('.','')
         if distver in self.build_repo_file:
             logger.log.info("source file is %s" % source)
             logger.log.info("destination file is %s" % destination)
@@ -73,15 +74,16 @@ class Repos():
                                       self.username, password = self.password)
             ssh_c.CopyFiles(source, destination)
         else:
-            logger.log.info("destination is %s" % dist)
-            logger.log.info("Not adding repo file to %s" % destination)
+            logger.log.info("Destination %s is %s" % (host, dist))
+            logger.log.info("Not adding repo file to %s" % host)
 
     def copy_async_updates_repo(self, host, conf_dict):
         """copy the async updates repo to all the existing nodes"""
 
         try:
             logger.log.info("Checking platform.dist of %s to get the right batched repo" % host)
-            dist = Platform(host, self.username, self.password)
+            pltfrm = Platform(host, self.username, self.password)
+            dist = pltfrm.GetDist()
 
             logger.log.info("Platform distribution for host %s is %s" % (host, dist))
             self.async_updates_url = conf_dict['async_repos'][dist[1]]
@@ -117,7 +119,8 @@ class Repos():
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
-        dist = Platform(host, self.username, self.password)
+        pltfrm = Platform(host, self.username, self.password)
+        dist = pltfrm.GetDist()
 
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
@@ -137,7 +140,8 @@ class Repos():
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
-        dist = Platform(host, self.username, self.password)
+        pltfrm = Platform(host, self.username, self.password)
+        dist = pltfrm.GetDist()
 
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 

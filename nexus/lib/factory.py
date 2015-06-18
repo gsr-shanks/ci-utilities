@@ -162,10 +162,10 @@ class Platform:
         self.username = username
         self.password = password
 
+    def GetDist(self):
         ssh_c = SSHClient(hostname = self.host, username = \
                                   self.username, password = self.password)
 
-    def GetDist(self):
         stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
                                                  print platform.dist()"')
         dist = stdout.read()
@@ -175,6 +175,9 @@ class Platform:
         return dist
 
     def GetArch(self):
+        ssh_c = SSHClient(hostname = self.host, username = \
+                                  self.username, password = self.password)
+
         stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
                                                  print platform.machine()"')
         arch = stdout.read()
