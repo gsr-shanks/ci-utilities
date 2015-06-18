@@ -162,11 +162,6 @@ class Platform:
         self.username = username
         self.password = password
 
-        if port == None:
-            self.port = 22
-        else:
-            self.port = port
-
         ssh_c = SSHClient(hostname = self.host, username = \
                                   self.username, password = self.password)
 
