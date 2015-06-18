@@ -22,8 +22,13 @@ class Repos():
 
     def __init__(self, options, conf_dict):
 
-        self.username = conf_dict['beaker']['username']
-        self.password = conf_dict['beaker']['password']
+        if options.provisioner == 'beaker':
+            self.username = conf_dict['beaker']['username']
+            self.password = conf_dict['beaker']['password']
+        elif options.provisioner == 'openstack':
+            self.username = conf_dict['openstack']['username']
+            self.password = conf_dict['openstack']['password']
+
         nodes = conf_dict['jenkins']['existing_nodes']
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.repos_section = 'repos'
