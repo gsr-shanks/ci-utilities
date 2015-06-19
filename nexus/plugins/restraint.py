@@ -49,6 +49,8 @@ class Restraint():
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
         repo_out = "/etc/yum.repos.d/restraint.repo"
 
+        ssh_c = SSHClient(hostname = host, username = \
+                                  self.username, password = self.password)
         restraint_repo = conf_dict['restraint'][dist[1]]
         wget_cmd = "wget " + restraint_repo + " -O " + repo_out
         logger.log.info("%s to %s" % (host, wget_cmd))
