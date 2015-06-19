@@ -132,6 +132,8 @@ class Repos():
         if dist[1] in self.static_repo_url:
             logger.log.info("Adding task_repo %s to %s" % (self.task_repo_url, host))
             copy_task_repo_cmd = "yum-config-manager --add-repo " + self.task_repo_url
+            ssh_c = SSHClient(hostname = host, username = \
+                                      self.username, password = self.password)
 
             stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_task_repo_cmd)
             for line in stdout.read().splitlines(): logger.log.info(line)
@@ -153,6 +155,8 @@ class Repos():
         if dist[1] in self.static_repo_url:
             logger.log.info("Adding static_repo %s to %s" % (self.static_repo_url, host))
             copy_static_repo_cmd = "yum-config-manager --add-repo " + self.static_repo_url
+            ssh_c = SSHClient(hostname = host, username = \
+                                      self.username, password = self.password)
 
             stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_static_repo_cmd)
             for line in stdout.read().splitlines(): logger.log.info(line)
