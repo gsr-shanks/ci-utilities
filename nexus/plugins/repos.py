@@ -37,7 +37,7 @@ class Repos():
         self.brew_tag = conf_dict['brew']['brew_tag']
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
         self.static_repo_url = os.environ.get("STATIC_REPO_URLS")
-        self.task_repo_url = os.environ.get("TASK_REPO_URLS")
+        self.task_repo_urls = os.environ.get("TASK_REPO_URLS")
 
     def my_build_repo(self, host, conf_dict):
 
@@ -126,12 +126,17 @@ class Repos():
         logger.log.info("Checking platform.dist of %s" % host)
         pltfrm = Platform(host, self.username, self.password)
         dist = pltfrm.GetDist()
+        arch = pltfrm.GetArch()
+
+        task_repo_urls = self.task_repo_urls.split(';')
+        task_arch_repo = [s for s in task_repo_urls if arch in s]
+        task_repo_url = task_arch_repo[0]
 
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
         if dist[1] in self.static_repo_url:
-            logger.log.info("Adding task_repo %s to %s" % (self.task_repo_url, host))
-            copy_task_repo_cmd = "yum-config-manager --add-repo " + self.task_repo_url
+            logger.log.info("Adding task_repo %s to %s" % (task_repo_url, host))
+            copy_task_repo_cmd = "yum-config-manager --add-repo " + task_repo_url
             ssh_c = SSHClient(hostname = host, username = \
                                       self.username, password = self.password)
 
@@ -215,7 +220,9 @@ class Repos():
             logger.log.info("brew tag is not for z-candidate, hence not \
                             picking any batched repo from conf.")
 
-        if self.task_repo_url and self.static_repo_url:
+
+
+        if self.task_repo_urls and self.static_repo_url:
             logger.log.info("Check and copy task_repo if dist is appropriate")
             threads.gather_results([threads.get_item(self.copy_task_repo, \
                                     host, conf_dict) for host in \
