@@ -235,8 +235,17 @@ class Pytest():
         self.pytest_junit_loc = conf_dict['pytest']['pytest_junit_loc']
 
         ci_msg = CI_MSG()
-        ttypes = ci_msg.get_ci_msg_value('testtypes')
-        ttiers = ci_msg.get_ci_msg_value('testtiers')
+        try:
+            ttypes = ci_msg.get_ci_msg_value('testtypes')
+        except Exception:
+            pass
+            ttypes = None
+
+        try:
+            ttiers = ci_msg.get_ci_msg_value('testtiers')
+        except Exception:
+            pass
+            ttiers = None
 
         patterns = []
 

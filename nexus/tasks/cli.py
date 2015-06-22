@@ -112,9 +112,19 @@ def setup_conf(options):
     config.read(conf)
 
     ci_msg = CI_MSG()
-    t = ci_msg.get_ci_msg_value('tag')
+    try:
+        t = ci_msg.get_ci_msg_value('tag')
+    except:
+        pass
+        t = ci_msg.get_ci_msg_value('target')
+
     if t:
-        tag = t['name']
+        try:
+            tag = t['name']
+        except:
+            pass
+            tag = t
+
         config.set('brew', 'brew_tag', tag)
         logger.log.info("brew tag name is %s" % tag)
     else:
