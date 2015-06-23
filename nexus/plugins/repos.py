@@ -35,9 +35,11 @@ class Repos():
 
         self.jenkins_job_name = conf_dict['jenkins']['job_name']
         self.brew_tag = conf_dict['brew']['brew_tag']
+        self.brew_arch = conf_dict['brew']['brew_arch']
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
         self.static_repo_url = os.environ.get("STATIC_REPO_URLS")
         self.task_repo_urls = os.environ.get("TASK_REPO_URLS")
+        self.task_repo_urls = self.task_repo_urls.split(';')
 
     def my_build_repo(self, host, conf_dict):
 
@@ -123,22 +125,26 @@ class Repos():
         Create TASK_REPO_URLS repo conf
         """
 
-        logger.log.info("Checking platform.dist of %s" % host)
-        pltfrm = Platform(host, self.username, self.password)
-        dist = pltfrm.GetDist()
-        arch = pltfrm.GetArch()
+        if self.task_repo_urls:
 
-        task_repo_urls = self.task_repo_urls.split(';')
-        task_arch_repo = [s for s in task_repo_urls if arch in s]
-        task_repo_url = task_arch_repo[0]
+            self.task_repo_urls = os.environ.get("TASK_REPO_URLS")
+            self.task_repo_urls = self.task_repo_urls.split(';')
 
-        logger.log.info("Platform distribution for host %s is %s" % (host, dist))
+            logger.log.info("Checking platform.dist of %s" % host)
 
-        if dist[1] in self.static_repo_url:
-            logger.log.info("Adding task_repo %s to %s" % (task_repo_url, host))
-            copy_task_repo_cmd = "yum-config-manager --add-repo " + task_repo_url
+            pltfrm = Platform(host, self.username, self.password)
+            dist = pltfrm.GetDist()
+
+            logger.log.info("Platform arch for host %s is %s" % (host, self.brew_arch))
+            logger.log.info("Platform distribution for host %s is %s" % (host, dist))
+            logger.log.info(self.task_repo_urls)
+
+            r = [s for s in self.task_repo_urls if self.brew_arch in s]
+
+            logger.log.info("Adding task_repo %s to %s" % (r[0], host))
+            copy_task_repo_cmd = "yum-config-manager --add-repo " + r[0]
             ssh_c = SSHClient(hostname = host, username = \
-                                      self.username, password = self.password)
+                                  self.username, password = self.password)
 
             stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_task_repo_cmd)
             for line in stdout.read().splitlines(): logger.log.info(line)
@@ -211,18 +217,18 @@ class Repos():
                                    self.existing_nodes])
 
         if "z-candidate" in self.brew_tag:
-            logger.log.info("brew tag is for z-candidate, hence picking \
-                            batched repo from conf.")
+            logger.log.info("brew tag is for z-candidate, hence picking batched repo from conf.")
             threads.gather_results([threads.get_item(self.copy_async_updates_repo, \
                                     host, conf_dict) for host in \
                                     self.existing_nodes])
         else:
-            logger.log.info("brew tag is not for z-candidate, hence not \
-                            picking any batched repo from conf.")
+            logger.log.info("brew tag is not for z-candidate, hence not picking any batched repo from conf.")
 
 
 
         if self.task_repo_urls and self.static_repo_url:
+	    logger.log.info("STATIC_REPO_URLS from env variable is %s" % self.static_repo_url)
+	    logger.log.info("TASK_REPO_URLS from env variable is %s" % self.task_repo_urls)
             logger.log.info("Check and copy task_repo if dist is appropriate")
             threads.gather_results([threads.get_item(self.copy_task_repo, \
                                     host, conf_dict) for host in \
