@@ -1,0 +1,10 @@
+pbr
+wget
+glob2
+paramiko
+argparse
+requests
+simplejson
+ConfigParser
+BeautifulSoup
+python-jenkins

@@ -17,6 +17,8 @@ from nexus.plugins.brew import Brew
 from nexus.plugins.git import Git
 from nexus.plugins.restraint import Restraint
 from nexus.plugins.repos import Repos
+from nexus.plugins.pytests import Pytest
+from nexus.plugins.testcoverage import Testcoverage
 
 class CI():
 
@@ -40,8 +42,36 @@ class CI():
             restraint.run_restraint(options, conf_dict)
 
         elif self.provisioner == "beaker" and self.framework == "pytest":
-            #TODO write code to run tests using pytest
-            print "pytest code"
+
+            repo = Repos(options, conf_dict)
+            repo.run_repo_setup(options, conf_dict)
+
+            pytest = Pytest(options, conf_dict)
+            pytest.run_pytest(options, conf_dict)
+
+            if options.coverage is True:
+                logger.log.info("Get coverage report")
+                coverage = Testcoverage(options, conf_dict)
+                coverage.coverage_reports(options, conf_dict)
+                coverage.get_reports(options, conf_dict)
+            else:
+                logger.log.info("No coverage report since option not set")
+
+        elif self.provisioner == "openstack" and self.framework == "pytest":
+
+            repo = Repos(options, conf_dict)
+            repo.run_repo_setup(options, conf_dict)
+
+            pytest = Pytest(options, conf_dict)
+            pytest.run_pytest(options, conf_dict)
+
+            if options.coverage is True:
+                logger.log.info("Get coverage report")
+                coverage = Testcoverage(options, conf_dict)
+                coverage.coverage_reports(options, conf_dict)
+                coverage.get_reports(options, conf_dict)
+            else:
+                logger.log.info("No coverage report since option not set")
 
         else:
             logger.log.error("Unknown provisioner or framework")

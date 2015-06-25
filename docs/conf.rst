@@ -4,12 +4,14 @@ Config sections
 * `beaker`_:
 * `jenkins`_:
 * `git`_:
+* `gerrit`_:
 * `errata`_:
 * `brew`_:
 * `async_repos`_:
 * `triggers`_:
 * `restraint`_:
 * `restraint_jobs`_:
+* `repos`_:
 
 beaker
 ------
@@ -69,6 +71,19 @@ intend to clone it everytime for few CI related files.
 git_test_branch is used to update the fetch URL in restraint xml's. 'default'
 leaves the restraint xml untouched, else the branch is appended in fetch URL.
 
+
+gerrit
+------
+
+::
+
+    [gerrit]
+    gerrit_repo_url = https://foo.bar.com/gerrit/ipa-pytests
+
+
+If GERRIT_REFSPEC is available in environment as variable then it is git
+pulled on top of the cloned repository. This is useful if you plan to test
+your patchset before merging it.
 
 errata
 ------
@@ -180,7 +195,13 @@ restraint_jobs
 restraint_jobs section maps the Jenkins environments' JOB_NAME to the
 restraint xml located in restraint sections job_xml_loc. Nexus gets the job
 name from enrionment variable and looks for the appropriate restraint xml
-file. 
+file.
 
 Cheat: You may skip mapping JOB_NAME to restraint xml in this section by
 exporting environment variable as WHAT_TEST="restraint xml file name"
+
+repos
+-----
+
+Any value you have in this section, is used as baseurl while creating yum repo
+using yum-config-manager command in all the existing nodes.

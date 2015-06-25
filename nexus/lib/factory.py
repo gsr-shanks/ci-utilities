@@ -10,6 +10,7 @@ import paramiko
 import socket
 import argparse
 import StringIO
+import platform
 
 PARAMIKO_VERSION = (int(paramiko.__version__.split('.')[0]), int(paramiko.__version__.split('.')[1]))
 
@@ -76,7 +77,7 @@ class SSHClient(paramiko.SSHClient):
         paramiko.SSHClient.__init__(self)
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.connect(self.hostname, port=self.port, username=self.username, password=self.password, timeout=30)
+            self.connect(self.hostname, port=self.port, username=self.username, password=self.password, timeout=60)
         except (paramiko.AuthenticationException, paramiko.SSHException, socket.error):
             raise
 
@@ -141,3 +142,43 @@ class SSHClient(paramiko.SSHClient):
         sftp = paramiko.SFTPClient.from_transport(Transport)
         FileAttributes = sftp.put(source, destination)
         return FileAttributes
+
+    def GetFiles(self,remotepath,localpath):
+        """ This Function copies files to local nodes from destination
+        @param:
+        remotepath: name of the file to be copied
+        localpath: name of file to be saved
+        """
+        Transport = self.get_transport()
+        sftp = paramiko.SFTPClient.from_transport(Transport)
+        FileAttributes = sftp.get(remotepath, localpath)
+        return FileAttributes
+
+class Platform:
+    """ This class will check the OS distribution and architecture
+    """
+    def __init__(self, host, username, password):
+        self.host = host
+        self.username = username
+        self.password = password
+
+    def GetDist(self):
+        ssh_c = SSHClient(hostname = self.host, username = \
+                                  self.username, password = self.password)
+
+        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
+                                                 print platform.dist()"')
+        dist = stdout.read()
+        dist = str(dist).replace('(','').replace(')','').replace("'", "").\
+               replace(',','')
+        dist = dist.split()
+        return dist
+
+    def GetArch(self):
+        ssh_c = SSHClient(hostname = self.host, username = \
+                                  self.username, password = self.password)
+
+        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
+                                                 print platform.machine()"')
+        arch = stdout.read()
+        return arch

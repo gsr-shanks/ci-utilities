@@ -31,7 +31,7 @@ def create_parser():
     recursive_parser = argparse.ArgumentParser(add_help=False)
 
     subparser = parser.add_subparsers(help='git, brew, errata, restraint, ci \
-        beaker or jenkins', dest='command')
+        beaker, openstack, pytest or jenkins', dest='command')
 
     parser_git = subparser.add_parser('git')
     parser_git.add_argument('--project', help='Git project')
@@ -65,12 +65,16 @@ def create_parser():
     parser_jenkins.add_argument('--run', help='Build Jenkins job')
     parser_jenkins.add_argument('--show-triggers', action='store_true', help='Show triggers from conf')
 
+    parser_pytest = subparser.add_parser('pytest')
+
     parser_beaker = subparser.add_parser('beaker')
+    parser_openstack = subparser.add_parser('openstack')
 
     parser_ci = subparser.add_parser('ci')
     parser_ci.add_argument('--provisioner', help='Infra used for test systems \
                             provisioning')
     parser_ci.add_argument('--framework', help='Test automation framework')
+    parser_ci.add_argument('--coverage', action='store_true', help='Test automation coverage')
     parser_ci.add_argument('--project', help=argparse.SUPPRESS)
     parser_ci.add_argument('--repo', help=argparse.SUPPRESS)
     parser_ci.add_argument('--branch', help=argparse.SUPPRESS)
@@ -108,9 +112,19 @@ def setup_conf(options):
     config.read(conf)
 
     ci_msg = CI_MSG()
-    t = ci_msg.get_ci_msg_value('tag')
+    try:
+        t = ci_msg.get_ci_msg_value('tag')
+    except:
+        pass
+        t = ci_msg.get_ci_msg_value('target')
+
     if t:
-        tag = t['name']
+        try:
+            tag = t['name']
+        except:
+            pass
+            tag = t
+
         config.set('brew', 'brew_tag', tag)
         logger.log.info("brew tag name is %s" % tag)
     else:
@@ -136,6 +150,13 @@ def setup_conf(options):
     else:
         logger.log.info("EXISTING_NODES from env variable is %s" % existing_nodes)
         config.set('jenkins', 'existing_nodes', existing_nodes)
+
+    private_ips = os.environ.get("PRIVATE_IPS")
+    if not private_ips:
+        logger.log.warn("Unable to find PRIVATE_IPS env variable")
+    else:
+        logger.log.info("PRIVATE_IPS from evn variable is %s" % private_ips)
+        config.set('jenkins', 'private_ips', private_ips)
 
     with open(conf, 'wb') as confini:
         config.write(confini)

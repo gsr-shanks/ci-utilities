@@ -18,6 +18,7 @@ import subprocess
 import shutil
 from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
+from nexus.lib.factory import Platform
 from nexus.lib import logger
 
 class Restraint():
@@ -38,18 +39,18 @@ class Restraint():
         Install restraint rpms and start its service.
         """
 
+        subprocess.call(['yum', 'update', '-y', 'restraint-client'])
+        logger.log.info("Updating restraint-client in local system")
+
         logger.log.info("Checking platform.dist of %s" % host)
-        ssh_c = SSHClient(hostname = host, username = \
-                                  self.username, password = self.password)
-        stdin, stdout, stderr = ssh_c.ExecuteCmd('python -c "import platform; \
-                                                 print platform.dist()"')
-        dist = stdout.read()
-        dist = str(dist).replace('(','').replace(')','').replace("'", "").\
-               replace(',','')
-        dist = dist.split()
+        pltfrm = Platform(host, self.username, self.password)
+        dist = pltfrm.GetDist()
+
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
         repo_out = "/etc/yum.repos.d/restraint.repo"
 
+        ssh_c = SSHClient(hostname = host, username = \
+                                  self.username, password = self.password)
         restraint_repo = conf_dict['restraint'][dist[1]]
         wget_cmd = "wget " + restraint_repo + " -O " + repo_out
         logger.log.info("%s to %s" % (host, wget_cmd))
@@ -61,6 +62,18 @@ class Restraint():
         logger.log.info("%s to %s" % (host, remove_cmd))
         stdin, stdout, stderr = ssh_c.ExecuteCmd(remove_cmd)
         for line in stdout.read().splitlines(): logger.log.info(line)
+
+        """
+        Check if OS is rhel5.11 and modify yum.conf to install
+        architecture specific packages
+        """
+        if dist[1] == "5.11":
+            yumconf = "/etc/yum.conf"
+            yumconf_append = "echo 'multilib_policy = best' >> " + yumconf
+            logger.log.info("%s is detected as 5.11. Setting multilib_policy \
+                            best in /etc/yum.conf" % host)
+            stdin, stdout, stderr = ssh_c.ExecuteCmd(yumconf_append)
+            for line in stdout.read().splitlines(): logger.log.info(line)
 
         restraint_install_rpms = conf_dict['restraint']['install_rpm']
         install_cmd = "yum install -y " + restraint_install_rpms
@@ -114,11 +127,18 @@ class Restraint():
             logger.log.info("Using the default branch to run tests.")
         else:
             self.git_test_branch_url = self.git_repo_url + "?" + self.git_test_branch
+            self.git_test_branch_task = "/" + self.git_test_branch + "/"
 
             j = open(self.restraint_xml, 'r').read()
             m = j.replace(self.git_repo_url, self.git_test_branch_url)
             f = open(self.restraint_xml, 'w')
             f.write(m)
+            f.close()
+
+            j = open(self.restraint_xml, 'r').read()
+            n = j.replace("/master/", self.git_test_branch_task)
+            f = open(self.restraint_xml, 'w')
+            f.write(n)
             f.close()
             logger.log.info("Updating restraint xml to use %s branch" % self.git_test_branch)
 
