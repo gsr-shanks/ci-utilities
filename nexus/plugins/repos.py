@@ -39,7 +39,11 @@ class Repos():
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
         self.static_repo_url = os.environ.get("STATIC_REPO_URLS")
         self.task_repo_urls = os.environ.get("TASK_REPO_URLS")
-        self.task_repo_urls = self.task_repo_urls.split(';')
+
+        if self.task_repo_urls:
+            self.task_repo_urls = self.task_repo_urls.split(';')
+        else:
+            logger.log.info("Task repo urls not found.")
 
     def my_build_repo(self, host, conf_dict):
 
