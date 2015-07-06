@@ -40,9 +40,9 @@ class Testcoverage():
 
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.coverage_conf = conf_dict['coverage']['coverage_conf']
-        self.coverage_dest = conf_dict['coverage']['coverage_dest']
         self.site_packages = conf_dict['coverage']['site_packages']
         self.site_customize = conf_dict['coverage']['site_customize']
+        self.coverage_rc = conf_dict['coverage']['coverage_rc']
 
 
     def update_coverage_conf(self, options, conf_dict):
@@ -69,7 +69,7 @@ class Testcoverage():
         ssh_c.CopyFiles(source, destination)
 
         source = self.coverage_conf
-        destination = self.coverage_dest
+        destination = self.coverage_rc
         logger.log.info("source file is %s" % source)
         ssh_c.CopyFiles(source, destination)
 
@@ -79,8 +79,8 @@ class Testcoverage():
         ssh_c = SSHClient(hostname = master, username = \
                         self.username, password = self.password)
 
-        coverage_html = "coverage html --rcfile=/root/.coveragerc"
-        stdout,stderr,exit_status = ssh_c.ExecuteScript(coverage_html)
+        coverage_combine = "coverage combine --rcfile=" + self.coverage_rc
+        stdout,stderr,exit_status = ssh_c.ExecuteScript(coverage_combine)
         output = stdout.getvalue()
         error = stderr.getvalue()
 
@@ -90,9 +90,9 @@ class Testcoverage():
         else:
             print "Script output: ", output
 
-        coverage_cmd = "coverage report --rcfile=" + self.coverage_dest + ";" \
-                        "coverage xml --rcfile=" + self.coverage_dest + ";" \
-                        "coverage html --rcfile=" + self.coverage_dest
+        coverage_cmd = "coverage report --rcfile=" + self.coverage_rc + ";" \
+                        "coverage xml --rcfile=" + self.coverage_rc + ";" \
+                        "coverage html --rcfile=" + self.coverage_rc
         stdout,stderr,exit_status = ssh_c.ExecuteScript(coverage_cmd)
         output = stdout.getvalue()
         error = stderr.getvalue()
@@ -109,19 +109,10 @@ class Testcoverage():
         master = self.existing_nodes[0]
         ssh_c = SSHClient(hostname = master, username = \
                         self.username, password = self.password)
-        coverage_data = conf_dict['coverage']['coverage_data']
-        scp = SCPClient(ssh_c.get_transport())
-        scp.get(coverage_data)
 
         coverage_xml = conf_dict['coverage']['coverage_xml']
         scp = SCPClient(ssh_c.get_transport())
         scp.get(coverage_xml)
-
-        remotepath = conf_dict['coverage']['coverage_html']
-        cmd = 'scp -r ' + master + ':' + remotepath + ' .'
-        p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
-        output = p.stdout.read()
-        print output
 
 
     def run_coverage(self, options, conf_dict):
