@@ -168,8 +168,9 @@ class Repos():
         logger.log.info("Platform distribution for host %s is %s" % (host, dist))
 
         if dist[1] in self.static_repo_url:
-            logger.log.info("Adding static_repo %s to %s" % (self.static_repo_url, host))
-            copy_static_repo_cmd = "yum-config-manager --add-repo " + self.static_repo_url
+            self.static_repo_url_arch = self.static_repo_url + "/" + self.brew_arch
+            logger.log.info("Adding static_repo %s to %s" % (self.static_repo_url_arch, host))
+            copy_static_repo_cmd = "yum-config-manager --add-repo " + self.static_repo_url_arch
             ssh_c = SSHClient(hostname = host, username = \
                                       self.username, password = self.password)
 
@@ -197,12 +198,36 @@ class Repos():
             stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_static_repo_cmd)
 
 
+    def install_yum_utils(self, host, conf_dict):
+        """
+        yum-utils should be installed for yum-config-manager command to be made
+        available on all the hosts to configure yum repos and disable gpgcheck.
+        """
+
+        ssh_c = SSHClient(hostname = host, username = \
+                self.username, password = self.password)
+
+        logger.log.info("Installing yum-utils on %s" % host)
+        install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils"
+
+        stdin, stdout, stderr = ssh_c.ExecuteCmd(install_yum_utils_cmd)
+
+        logger.log.info("Disabling gpgcheck in /etc/yum.conf on %s" % host)
+        disable_gpgcheck = "echo gpgcheck=no >> /etc/yum.conf"
+
+        stdin, stdout, stderr = ssh_c.ExecuteCmd(disable_gpgcheck)
+
+
     def run_repo_setup(self, options, conf_dict):
         """
         run async_updates repo function using threads per host.
         """
 
         threads = Threader()
+
+        threads.gather_results([threads.get_item(self.install_yum_utils, \
+                                host, conf_dict) for host in \
+                                self.existing_nodes])
 
         if self.build_repo_tag:
             logger.log.info("BUILD_REPO_TAG found in env")
