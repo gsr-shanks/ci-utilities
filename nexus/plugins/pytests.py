@@ -170,14 +170,18 @@ class Pytest():
         self.junit_new_out = conf_dict['pytest']['pytest_new_junit_loc']
         self.team = conf_dict['pytest']['team']
 
-        massage_junit = "python " + self.junit_convert_script + " -i " + \
-                        remote_file + " -o " + self.junit_new_out + " -t " + self.team
+        try:
+            massage_junit = "python " + self.junit_convert_script + " -i " + \
+                            remote_file + " -o " + self.junit_new_out + " -t " + self.team
 
-        stdin, stdout, stderr = ssh_c.ExecuteCmd(massage_junit)
-        for line in stdout.read().splitlines(): logger.log.info(line)
+            stdin, stdout, stderr = ssh_c.ExecuteCmd(massage_junit)
+            for line in stdout.read().splitlines(): logger.log.info(line)
 
-        scp = SCPClient(ssh_c.get_transport())
-        scp.get(self.junit_new_out)
+            scp = SCPClient(ssh_c.get_transport())
+            scp.get(self.junit_new_out)
+        except IOError:
+            logger.log.info("Missing Junit xml file.")
+            pass
 
 
     def run_pytest(self, options, conf_dict):
