@@ -169,9 +169,14 @@ class Pytest():
         self.junit_convert_script = conf_dict['pytest']['junit_convert_script']
         self.junit_new_out = conf_dict['pytest']['pytest_new_junit_loc']
         self.team = conf_dict['pytest']['team']
+        tests_base = conf_dict['pytest']['tests_base']
+        self.package = tests_base.replace("-", "_")
+        tests_to_run = conf_dict['pytest']['tests_to_run']
+        self.test_suite = tests_to_run.rsplit('/', 1)[1]
 
         massage_junit = "python " + self.junit_convert_script + " -i " + \
-                        remote_file + " -o " + self.junit_new_out + " -t " + self.team
+                        remote_file + " -o " + self.junit_new_out + " -t " + self.team + \
+                        " -p " + self.package + " -s " + self.test_suite
 
         stdin, stdout, stderr = ssh_c.ExecuteCmd(massage_junit)
         for line in stdout.read().splitlines(): logger.log.info(line)
