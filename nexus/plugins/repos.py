@@ -143,7 +143,10 @@ class Repos():
             logger.log.info("Platform distribution for host %s is %s" % (host, dist))
             logger.log.info(self.task_repo_urls)
 
-            r = [s for s in self.task_repo_urls if self.brew_arch in s]
+            if len(self.task_repo_urls) == 1:
+                r = self.task_repo_urls
+            else:
+                r = [s for s in self.task_repo_urls if self.brew_arch in s]
 
             logger.log.info("Adding task_repo %s to %s" % (r[0], host))
             copy_task_repo_cmd = "yum-config-manager --add-repo " + r[0]
