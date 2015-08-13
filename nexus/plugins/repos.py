@@ -143,7 +143,10 @@ class Repos():
             logger.log.info("Platform distribution for host %s is %s" % (host, dist))
             logger.log.info(self.task_repo_urls)
 
-            r = [s for s in self.task_repo_urls if self.brew_arch in s]
+            if len(self.task_repo_urls) == 1:
+                r = self.task_repo_urls
+            else:
+                r = [s for s in self.task_repo_urls if self.brew_arch in s]
 
             logger.log.info("Adding task_repo %s to %s" % (r[0], host))
             copy_task_repo_cmd = "yum-config-manager --add-repo " + r[0]
@@ -159,6 +162,7 @@ class Repos():
     def copy_static_repo(self, host, conf_dict):
         """
         Create STATIC_REPO_URLS repo conf
+        NOTE: THIS IS NOT USED ANYMORE BECAUSE OF ISSUES IN OTHER COMPONENTS.
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
@@ -255,8 +259,7 @@ class Repos():
 
 
 
-        if self.task_repo_urls and self.static_repo_url:
-	    logger.log.info("STATIC_REPO_URLS from env variable is %s" % self.static_repo_url)
+        if self.task_repo_urls:
 	    logger.log.info("TASK_REPO_URLS from env variable is %s" % self.task_repo_urls)
             logger.log.info("Check and copy task_repo if dist is appropriate")
             threads.gather_results([threads.get_item(self.copy_task_repo, \
@@ -264,14 +267,6 @@ class Repos():
                                     self.existing_nodes])
         else:
             logger.log.info("TASK_REPO_URLS env variable not found")
-
-        if self.static_repo_url:
-            logger.log.info("Check and copy static_repo if dist is appropriate")
-            threads.gather_results([threads.get_item(self.copy_static_repo, \
-                                    host, conf_dict) for host in \
-                                    self.existing_nodes])
-        else:
-            logger.log.info("STATIC_REPO_URLS env variable not found")
 
         if conf_dict.has_key('repos'):
             logger.log.info("repos section detected.")
