@@ -82,7 +82,7 @@ class CI():
             repo.run_repo_setup(options, conf_dict)
 
             restraint = Restraint(options, conf_dict)
-
+            restraint.run_restraint(options, conf_dict)
 
         else:
             logger.log.error("Unknown provisioner or framework")
