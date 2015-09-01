@@ -22,10 +22,14 @@ class Repos():
 
     def __init__(self, options, conf_dict):
 
-        if options.provisioner == 'beaker':
+
+        self.provisioner = options.provisioner
+        self.framework = options.framework
+
+        if self.provisioner == 'beaker':
             self.username = conf_dict['beaker']['username']
             self.password = conf_dict['beaker']['password']
-        elif options.provisioner == 'openstack':
+        elif self.provisioner == 'openstack':
             self.username = conf_dict['openstack']['username']
             self.password = conf_dict['openstack']['password']
 
@@ -213,7 +217,7 @@ class Repos():
 
         logger.log.info("Installing yum-utils on %s" % host)
 
-        if options.provisioner == 'openstack' and self.framework == 'restraint':
+        if self.provisioner == 'openstack' and self.framework == 'restraint':
             install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils wget beakerlib"
         else:
             install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils"
