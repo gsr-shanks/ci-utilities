@@ -204,6 +204,7 @@ class Repos():
             copy_static_repo_cmd = "yum-config-manager --add-repo " + value
 
             stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_static_repo_cmd)
+            for line in stdout.read().splitlines(): logger.log.info(line)
 
 
     def install_yum_utils(self, host, conf_dict):
