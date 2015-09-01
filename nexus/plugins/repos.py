@@ -211,7 +211,7 @@ class Repos():
                 self.username, password = self.password)
 
         logger.log.info("Installing yum-utils on %s" % host)
-        install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils"
+        install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils wget"
 
         stdin, stdout, stderr = ssh_c.ExecuteCmd(install_yum_utils_cmd)
 
