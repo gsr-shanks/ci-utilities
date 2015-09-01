@@ -29,6 +29,7 @@ class Repos():
             self.username = conf_dict['openstack']['username']
             self.password = conf_dict['openstack']['password']
 
+        self.framework = options.framework
         nodes = conf_dict['jenkins']['existing_nodes']
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.repos_section = 'repos'
@@ -211,7 +212,11 @@ class Repos():
                 self.username, password = self.password)
 
         logger.log.info("Installing yum-utils on %s" % host)
-        install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils wget"
+
+        if options.provisioner == 'openstack' and self.framework == 'restraint':
+            install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils wget beakerlib"
+        else:
+            install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils"
 
         stdin, stdout, stderr = ssh_c.ExecuteCmd(install_yum_utils_cmd)
 
