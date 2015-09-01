@@ -215,12 +215,12 @@ class Repos():
         ssh_c = SSHClient(hostname = host, username = \
                 self.username, password = self.password)
 
-        logger.log.info("Installing yum-utils on %s" % host)
-
         if self.provisioner == 'openstack' and self.framework == 'restraint':
             install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils wget beakerlib"
+            logger.log.info("Installing yum-utils wget beakerlib on %s" % host)
         else:
             install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils"
+            logger.log.info("Installing yum-utils on %s" % host)
 
         stdin, stdout, stderr = ssh_c.ExecuteCmd(install_yum_utils_cmd)
 
@@ -236,6 +236,14 @@ class Repos():
         """
 
         threads = Threader()
+
+        if conf_dict.has_key('repos'):
+            logger.log.info("repos section detected.")
+            threads.gather_results([threads.get_item(self.create_repos_section, \
+                                    host, conf_dict) for host in \
+                                    self.existing_nodes])
+        else:
+            logger.log.info("repos section not found.")
 
         threads.gather_results([threads.get_item(self.install_yum_utils, \
                                 host, conf_dict) for host in \
@@ -284,11 +292,3 @@ class Repos():
                                     self.existing_nodes])
         else:
             logger.log.info("STATIC_REPO_URLS env variable not found")
-
-        if conf_dict.has_key('repos'):
-            logger.log.info("repos section detected.")
-            threads.gather_results([threads.get_item(self.create_repos_section, \
-                                    host, conf_dict) for host in \
-                                    self.existing_nodes])
-        else:
-            logger.log.info("repos section not found.")
