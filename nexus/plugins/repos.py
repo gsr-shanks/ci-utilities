@@ -252,6 +252,10 @@ class Repos():
         else:
             logger.log.info("repos section not found.")
 
+        threads.gather_results([threads.get_item(self.install_yum_utils, \
+                                host, conf_dict) for host in \
+                                self.existing_nodes])
+
         if self.build_repo_tag:
             logger.log.info("BUILD_REPO_TAG found in env")
             threads.gather_results([threads.get_item(self.copy_build_repo, \
