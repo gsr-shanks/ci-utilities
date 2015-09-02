@@ -25,11 +25,20 @@ class Restraint():
 
     def __init__(self, options, conf_dict):
 
-        self.username = conf_dict['beaker']['username']
-        self.password = conf_dict['beaker']['password']
-        nodes = conf_dict['jenkins']['existing_nodes']
-        self.existing_nodes = [item.strip() for item in nodes.split(',')]
+        self.provisioner = options.provisioner
 
+        if self.provisioner == "beaker":
+            self.username = conf_dict['beaker']['username']
+            self.password = conf_dict['beaker']['password']
+            nodes = conf_dict['jenkins']['existing_nodes']
+        elif self.provisioner == "openstack":
+            self.username = conf_dict['openstack']['username']
+            self.password = conf_dict['openstack']['password']
+            nodes = conf_dict['jenkins']['private_ips']
+        else:
+            logger.log.error("Unknown provisioner")
+
+        self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.jenkins_job_name = conf_dict['jenkins']['job_name']
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
 

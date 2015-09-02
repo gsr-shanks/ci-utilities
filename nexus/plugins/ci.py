@@ -73,5 +73,16 @@ class CI():
             else:
                 logger.log.info("No coverage report since option not set")
 
+        elif self.provisioner == "openstack" and self.framework == "restraint":
+
+            git = Git(options, conf_dict)
+            git.get_archive()
+
+            repo = Repos(options, conf_dict)
+            repo.run_repo_setup(options, conf_dict)
+
+            restraint = Restraint(options, conf_dict)
+            restraint.run_restraint(options, conf_dict)
+
         else:
             logger.log.error("Unknown provisioner or framework")

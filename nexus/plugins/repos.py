@@ -22,13 +22,18 @@ class Repos():
 
     def __init__(self, options, conf_dict):
 
-        if options.provisioner == 'beaker':
+
+        self.provisioner = options.provisioner
+        self.framework = options.framework
+
+        if self.provisioner == 'beaker':
             self.username = conf_dict['beaker']['username']
             self.password = conf_dict['beaker']['password']
-        elif options.provisioner == 'openstack':
+        elif self.provisioner == 'openstack':
             self.username = conf_dict['openstack']['username']
             self.password = conf_dict['openstack']['password']
 
+        self.framework = options.framework
         nodes = conf_dict['jenkins']['existing_nodes']
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.repos_section = 'repos'
@@ -162,7 +167,6 @@ class Repos():
     def copy_static_repo(self, host, conf_dict):
         """
         Create STATIC_REPO_URLS repo conf
-        NOTE: THIS IS NOT USED ANYMORE BECAUSE OF ISSUES IN OTHER COMPONENTS.
         """
 
         logger.log.info("Checking platform.dist of %s" % host)
@@ -200,6 +204,7 @@ class Repos():
             copy_static_repo_cmd = "yum-config-manager --add-repo " + value
 
             stdin, stdout, stderr = ssh_c.ExecuteCmd(copy_static_repo_cmd)
+            for line in stdout.read().splitlines(): logger.log.info(line)
 
 
     def install_yum_utils(self, host, conf_dict):
@@ -211,15 +216,22 @@ class Repos():
         ssh_c = SSHClient(hostname = host, username = \
                 self.username, password = self.password)
 
-        logger.log.info("Installing yum-utils on %s" % host)
-        install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils"
+        if self.provisioner == 'openstack' and self.framework == 'restraint':
+            logger.log.info("Install packages requried for restraint with openstack")
+            install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils wget beakerlib beakerlib-redhat"
+            logger.log.info("Installing yum-utils wget beakerlib beakerlib-redhat on %s" % host)
+        else:
+            install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils"
+            logger.log.info("Installing yum-utils on %s" % host)
 
         stdin, stdout, stderr = ssh_c.ExecuteCmd(install_yum_utils_cmd)
+        for line in stdout.read().splitlines(): logger.log.info(line)
 
         logger.log.info("Disabling gpgcheck in /etc/yum.conf on %s" % host)
         disable_gpgcheck = "echo gpgcheck=no >> /etc/yum.conf"
 
         stdin, stdout, stderr = ssh_c.ExecuteCmd(disable_gpgcheck)
+        for line in stdout.read().splitlines(): logger.log.info(line)
 
 
     def run_repo_setup(self, options, conf_dict):
@@ -228,6 +240,18 @@ class Repos():
         """
 
         threads = Threader()
+
+        threads.gather_results([threads.get_item(self.install_yum_utils, \
+                                host, conf_dict) for host in \
+                                self.existing_nodes])
+
+        if conf_dict.has_key('repos'):
+            logger.log.info("repos section detected.")
+            threads.gather_results([threads.get_item(self.create_repos_section, \
+                                    host, conf_dict) for host in \
+                                    self.existing_nodes])
+        else:
+            logger.log.info("repos section not found.")
 
         threads.gather_results([threads.get_item(self.install_yum_utils, \
                                 host, conf_dict) for host in \
@@ -259,8 +283,9 @@ class Repos():
 
 
 
-        if self.task_repo_urls:
-	    logger.log.info("TASK_REPO_URLS from env variable is %s" % self.task_repo_urls)
+        if self.task_repo_urls and self.static_repo_url:
+            logger.log.info("STATIC_REPO_URLS from env variable is %s" % self.static_repo_url)
+            logger.log.info("TASK_REPO_URLS from env variable is %s" % self.task_repo_urls)
             logger.log.info("Check and copy task_repo if dist is appropriate")
             threads.gather_results([threads.get_item(self.copy_task_repo, \
                                     host, conf_dict) for host in \
@@ -268,10 +293,10 @@ class Repos():
         else:
             logger.log.info("TASK_REPO_URLS env variable not found")
 
-        if conf_dict.has_key('repos'):
-            logger.log.info("repos section detected.")
-            threads.gather_results([threads.get_item(self.create_repos_section, \
+        if self.static_repo_url:
+            logger.log.info("Check and copy static_repo if dist is appropriate")
+            threads.gather_results([threads.get_item(self.copy_static_repo, \
                                     host, conf_dict) for host in \
                                     self.existing_nodes])
         else:
-            logger.log.info("repos section not found.")
+            logger.log.info("STATIC_REPO_URLS env variable not found")
