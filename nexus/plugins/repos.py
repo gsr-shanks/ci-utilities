@@ -224,11 +224,13 @@ class Repos():
             logger.log.info("Installing yum-utils on %s" % host)
 
         stdin, stdout, stderr = ssh_c.ExecuteCmd(install_yum_utils_cmd)
+        for line in stdout.read().splitlines(): logger.log.info(line)
 
         logger.log.info("Disabling gpgcheck in /etc/yum.conf on %s" % host)
         disable_gpgcheck = "echo gpgcheck=no >> /etc/yum.conf"
 
         stdin, stdout, stderr = ssh_c.ExecuteCmd(disable_gpgcheck)
+        for line in stdout.read().splitlines(): logger.log.info(line)
 
 
     def run_repo_setup(self, options, conf_dict):
@@ -238,6 +240,10 @@ class Repos():
 
         threads = Threader()
 
+        threads.gather_results([threads.get_item(self.install_yum_utils, \
+                                host, conf_dict) for host in \
+                                self.existing_nodes])
+
         if conf_dict.has_key('repos'):
             logger.log.info("repos section detected.")
             threads.gather_results([threads.get_item(self.create_repos_section, \
@@ -245,10 +251,6 @@ class Repos():
                                     self.existing_nodes])
         else:
             logger.log.info("repos section not found.")
-
-        threads.gather_results([threads.get_item(self.install_yum_utils, \
-                                host, conf_dict) for host in \
-                                self.existing_nodes])
 
         if self.build_repo_tag:
             logger.log.info("BUILD_REPO_TAG found in env")
