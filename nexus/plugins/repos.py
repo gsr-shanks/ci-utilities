@@ -217,8 +217,9 @@ class Repos():
                 self.username, password = self.password)
 
         if self.provisioner == 'openstack' and self.framework == 'restraint':
-            install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils wget beakerlib"
-            logger.log.info("Installing yum-utils wget beakerlib on %s" % host)
+            logger.log.info("Install packages requried for restraint with openstack")
+            install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils wget beakerlib beakerlib-redhat"
+            logger.log.info("Installing yum-utils wget beakerlib beakerlib-redhat on %s" % host)
         else:
             install_yum_utils_cmd = "yum install -y --nogpgcheck yum-utils"
             logger.log.info("Installing yum-utils on %s" % host)
