@@ -16,6 +16,7 @@ import platform
 import glob
 import subprocess
 import shutil
+import xml.etree.ElementTree as ET
 from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
 from nexus.lib.factory import Platform
@@ -41,6 +42,7 @@ class Restraint():
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.jenkins_job_name = conf_dict['jenkins']['job_name']
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
+        self.git_repo_url = conf_dict['git']['git_repo_url']
 
     def restraint_setup(self, host, conf_dict):
         """
@@ -157,6 +159,19 @@ class Restraint():
         f = open(self.restraint_xml, 'w')
         f.write(m)
         f.close()
+
+        self.git_refspec = os.environ.get("GERRIT_REFSPEC")
+        if self.git_refspec:
+            logger.log.info("GERRIT_REFSPEC found in evnironment variable")
+            tree = ET.parse(self.restraint_xml)
+            root = tree.getroot()
+            p = root.find("recipeSet")
+            fetches = p.getiterator("fetch")
+            for i in fetches:
+                i.attrib["url"] = git_repo_url + "?" + self.git_refspec
+
+            tree.write(self.restraint_xml)
+            logger.log.info("Updated %s to fetch GERRIT_REFSPEC" % self.restraint_xml)
 
     def execute_restraint(self):
         """
