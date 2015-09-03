@@ -168,7 +168,7 @@ class Restraint():
             p = root.find("recipeSet")
             fetches = p.getiterator("fetch")
             for i in fetches:
-                i.attrib["url"] = git_repo_url + "?" + self.git_refspec
+                i.attrib["url"] = self.git_repo_url + "?" + self.git_refspec
 
             tree.write(self.restraint_xml)
             logger.log.info("Updated %s to fetch GERRIT_REFSPEC" % self.restraint_xml)
