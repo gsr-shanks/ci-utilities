@@ -42,7 +42,6 @@ class Restraint():
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.jenkins_job_name = conf_dict['jenkins']['job_name']
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
-        self.git_repo_url = conf_dict['git']['git_repo_url']
 
     def restraint_setup(self, host, conf_dict):
         """
@@ -168,7 +167,9 @@ class Restraint():
             p = root.find("recipeSet")
             fetches = p.getiterator("fetch")
             for i in fetches:
-                i.attrib["url"] = self.git_repo_url + "?" + self.git_refspec
+                git_repo_url = i.attrib['url'].split('#')[0]
+                task_name = i.attrib['url'].split('#')[1]
+                i.attrib["url"] = git_repo_url + "?" + self.git_refspec + "#" + task_name
 
             tree.write(self.restraint_xml)
             logger.log.info("Updated %s to fetch GERRIT_REFSPEC" % self.restraint_xml)
