@@ -16,6 +16,7 @@ import platform
 import glob
 import subprocess
 import shutil
+import xml.etree.ElementTree as ET
 from nexus.lib.factory import SSHClient
 from nexus.lib.factory import Threader
 from nexus.lib.factory import Platform
@@ -41,6 +42,7 @@ class Restraint():
         self.existing_nodes = [item.strip() for item in nodes.split(',')]
         self.jenkins_job_name = conf_dict['jenkins']['job_name']
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
+        self.git_refspec = os.environ.get("GERRIT_REFSPEC")
 
     def restraint_setup(self, host, conf_dict):
         """
@@ -158,6 +160,20 @@ class Restraint():
         f.write(m)
         f.close()
 
+        if self.git_refspec:
+            logger.log.info("GERRIT_REFSPEC found in evnironment variable")
+            tree = ET.parse(self.restraint_xml)
+            root = tree.getroot()
+            p = root.find("recipeSet")
+            fetches = p.getiterator("fetch")
+            for i in fetches:
+                git_repo_url = i.attrib['url'].split('#')[0]
+                task_name = i.attrib['url'].split('#')[1]
+                i.attrib["url"] = git_repo_url + "?" + self.git_refspec + "#" + task_name
+
+            tree.write(self.restraint_xml)
+            logger.log.info("Updated %s to fetch GERRIT_REFSPEC" % self.restraint_xml)
+
     def execute_restraint(self):
         """
         Check for the length of resources and build appropriate restraint
@@ -192,27 +208,30 @@ class Restraint():
     def restraint_junit(self):
         """convert job.xml to junit.xml"""
 
-        logger.log.info("Converting job.xml to junit")
-        job2junit = "/usr/share/restraint/client/job2junit.xml"
+        if not self.git_refspec:
+            logger.log.info("Converting job.xml to junit")
+            job2junit = "/usr/share/restraint/client/job2junit.xml"
 
-        all_dirs = [d for d in os.listdir('.') if os.path.isdir(d)]
-        latest_dir = max(all_dirs, key=os.path.getmtime)
+            all_dirs = [d for d in os.listdir('.') if os.path.isdir(d)]
+            latest_dir = max(all_dirs, key=os.path.getmtime)
 
-        job_xml = os.path.join(latest_dir, "job.xml")
+            job_xml = os.path.join(latest_dir, "job.xml")
 
-        if os.path.exists(job_xml):
-            args = ('xsltproc', '/usr/share/restraint/client/job2junit.xml', job_xml)
-            p_out = subprocess.PIPE
-            p_err = subprocess.PIPE
+            if os.path.exists(job_xml):
+                args = ('xsltproc', '/usr/share/restraint/client/job2junit.xml', job_xml)
+                p_out = subprocess.PIPE
+                p_err = subprocess.PIPE
 
-            p = subprocess.Popen(args,stdout=p_out,stderr=p_err)
-            stdout,stderr = p.communicate()
+                p = subprocess.Popen(args,stdout=p_out,stderr=p_err)
+                stdout,stderr = p.communicate()
 
-            fd = open("junit.xml", "w")
-            fd.write(stdout)
-            fd.close()
+                fd = open("junit.xml", "w")
+                fd.write(stdout)
+                fd.close()
+            else:
+                logger.log.warn("job.xml not found.")
         else:
-            logger.log.warn("job.xml not found.")
+            logger.log.info("GERRIT_REFSPEC found in environment variable. Do not convert job2junit.")
 
     def restraint_html(self):
         """get index.html from test directory to workspace"""
