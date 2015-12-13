@@ -19,6 +19,7 @@ from nexus.plugins.restraint import Restraint
 from nexus.plugins.repos import Repos
 from nexus.plugins.pytests import Pytest
 from nexus.plugins.testcoverage import Testcoverage
+from nexus.plugins.dogtag import PkiTest
 
 class CI():
 
@@ -84,5 +85,24 @@ class CI():
             restraint = Restraint(options, conf_dict)
             restraint.run_restraint(options, conf_dict)
 
+        elif self.provisioner == "openstack" and self.framework == "dogtag-pytest":
+            repo = Repos(options, conf_dict)
+            repo.run_repo_setup(options, conf_dict)
+            pkitest = PkiTest(options, conf_dict)
+            pkitest.update_etc_hosts()
+            yaml_file = pkitest.create_yaml()
+            pkitest.deploy_ssh_keys()
+            if pkitest.copy_extras_repo():
+                logger.log.info("Extra's repo configured successfull")
+                if pkitest.install_prereqs():
+                    logger.log.info("Pre-requisites to run pytest has been installed successfull")
+                    if pkitest.run_pytest(yaml_file)
+                        logger.log.info("pytest ran successfully")
+                    else:
+                        logger.log.info("pytest failed")
+                else:
+                    logger.log.info("Pre-requisites to run pytest has not been installed")
+            else:
+                logger.log.info("Extras repo did not configure")
         else:
             logger.log.error("Unknown provisioner or framework")
