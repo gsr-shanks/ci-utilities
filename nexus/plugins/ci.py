@@ -85,7 +85,7 @@ class CI():
             restraint = Restraint(options, conf_dict)
             restraint.run_restraint(options, conf_dict)
 
-        elif self.provisioner == "openstack" and self.framework == "dogtag-pytest":
+        elif self.provisioner == "beaker" and self.framework == "dogtag-pytest":
             repo = Repos(options, conf_dict)
             repo.run_repo_setup(options, conf_dict)
             pkitest = PkiTest(options, conf_dict)
