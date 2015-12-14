@@ -96,7 +96,7 @@ class CI():
                 logger.log.info("Extra's repo configured successfull")
                 if pkitest.install_prereqs():
                     logger.log.info("Pre-requisites to run pytest has been installed successfull")
-                    if pkitest.run_pytest(yaml_file)
+                    if pkitest.run_pytest(yaml_file):
                         logger.log.info("pytest ran successfully")
                     else:
                         logger.log.info("pytest failed")
