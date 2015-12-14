@@ -23,6 +23,7 @@ setup(
         'paramiko',
         'argparse',
         'requests',
+        'PyYAML',
         'simplejson',
         'ConfigParser',
         'BeautifulSoup',

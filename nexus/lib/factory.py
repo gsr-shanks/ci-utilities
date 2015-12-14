@@ -11,6 +11,7 @@ import socket
 import argparse
 import StringIO
 import platform
+from nexus.lib import logger
 
 PARAMIKO_VERSION = (int(paramiko.__version__.split('.')[0]), int(paramiko.__version__.split('.')[1]))
 
@@ -78,7 +79,10 @@ class SSHClient(paramiko.SSHClient):
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             self.connect(self.hostname, port=self.port, username=self.username, password=self.password, timeout=60)
-        except (paramiko.AuthenticationException, paramiko.SSHException, socket.error):
+        except (paramiko.AuthenticationException, paramiko.SSHException) as Err:
+            raise
+        except socket.error as Err:
+            logger.log.info("Connection to %s host failed with error %s"%(self.hostname, Err.strerror))
             raise
 
     def ExecuteCmd(self, args):
