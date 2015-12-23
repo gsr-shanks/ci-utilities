@@ -26,7 +26,6 @@ setup(
         'PyYAML',
         'simplejson',
         'ConfigParser',
-        'koji',
         'scp',
         'BeautifulSoup',
         'python-jenkins'
