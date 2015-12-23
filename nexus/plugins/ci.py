@@ -20,6 +20,7 @@ from nexus.plugins.repos import Repos
 from nexus.plugins.pytests import Pytest
 from nexus.plugins.testcoverage import Testcoverage
 from nexus.plugins.dogtag import PkiTest
+import os
 
 class CI():
 
@@ -85,6 +86,30 @@ class CI():
             restraint = Restraint(options, conf_dict)
             restraint.run_restraint(options, conf_dict)
 
+        elif self.provisioner == "openstack" and self.framework == "dogtag-pytest":
+            repo = Repos(options, conf_dict)
+            repo.run_repo_setup(options, conf_dict)
+            pkitest = PkiTest(options, conf_dict)
+            pkitest.set_hostnames()
+            pkitest.update_etc_hosts()
+            yaml_file = pkitest.create_yaml()
+            logger.log.info("we completed creating yaml file")
+            logger.log.info("Current working directory is: %s"%(os.environ.get('PWD')))
+            pkitest.deploy_ssh_keys()
+            if pkitest.copy_extras_repo():
+                logger.log.info("Extra's repo configured successfull")
+                if pkitest.install_prereqs():
+                    logger.log.info("Pre-requisites to run pytest has been installed successfull")
+                    pkitest.pytest_setup()
+                    if pkitest.run_pytest(yaml_file):
+                        logger.log.info("pytest ran successfully")
+                    else:
+                        logger.log.info("pytest failed")
+                else:
+                    logger.log.info("Pre-requisites to run pytest has not been installed")
+            else:
+                logger.log.info("Extras repo did not configure")
+
         elif self.provisioner == "beaker" and self.framework == "dogtag-pytest":
             repo = Repos(options, conf_dict)
             repo.run_repo_setup(options, conf_dict)
@@ -96,7 +121,7 @@ class CI():
                 logger.log.info("Extra's repo configured successfull")
                 if pkitest.install_prereqs():
                     logger.log.info("Pre-requisites to run pytest has been installed successfull")
-                    if pkitest.run_pytest(yaml_file)
+                    if pkitest.run_pytest(yaml_file):
                         logger.log.info("pytest ran successfully")
                     else:
                         logger.log.info("pytest failed")

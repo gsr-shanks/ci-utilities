@@ -19,6 +19,8 @@ import shutil
 import yaml
 import tempfile
 import xml.etree.ElementTree as ET
+import paramiko
+from scp import SCPClient
 from nexus.lib.factory import SSHClient
 from nexus.lib.ci_message import CI_MSG
 from nexus.lib.factory import Platform
@@ -35,43 +37,53 @@ class PkiTest(object):
             self.username = self.conf_dict['beaker']['username']
             self.password = self.conf_dict['beaker']['password']
             nodes = self.conf_dict['jenkins']['existing_nodes']
+            self.existing_nodes = [item.strip() for item in nodes.split(',')]
         elif self.provisioner == "openstack":
             self.username = self.conf_dict['openstack']['username']
             self.password = self.conf_dict['openstack']['password']
             nodes = self.conf_dict['jenkins']['private_ips']
-        else:
-            logger.log.error("Unknown Provisioner")
-        self.existing_nodes = [item.strip() for item in nodes.split(',')]
-        if len(self.existing_nodes) is 1:
             nodes = conf_dict['jenkins']['private_ips']
             self.existing_nodes = [item.strip() for item in nodes.split(',')]
+        else:
+            logger.log.error("Unknown Provisioner")
         self.workspace = self.conf_dict['jenkins']['workspace']
         self.jenkins_job_name = self.conf_dict['jenkins']['job_name']
         self.ssh_keys_priv = self.conf_dict['pytest']['ssh_keys_priv']
         self.ssh_keys_pub = conf_dict['pytest']['ssh_keys_pub']
-        #self.tests_cfg = self.conf_dict['pytest']['tests_cfg']
         self.tests_to_run = self.conf_dict['pytest']['tests_to_run']
         self.tags_pattern = self.conf_dict['pytest']['tags_pattern']
         self.build_repo_tag = os.environ.get("BUILD_REPO_TAG")
         self.hosts = []
-        self.etc_host = self.get_hosts()
+        self.etc_host = {}
         self.pytest_node = self.existing_nodes[0]
 
     def get_hosts(self):
         """ Get Hostnames of the provisioned vm's in openstack """
-        etc_host_data = {}
         for host in self.existing_nodes:
             ssh_c = SSHClient(hostname = host, username = self.username, password = self.password)
             stdin, stdout, stderr = ssh_c.ExecuteCmd('hostname')
             for line in stdout.read().splitlines():
                 logger.log.info(line)
-                etc_host_data[host] = line
+                self.etc_host[host] = line
                 self.hosts.append(line)
-        return etc_host_data
+
+    def set_hostnames(self):
+        """ Set hostnames to the provisioned systems """
+        total_count = len(self.existing_nodes)
+        temp_count = 1
+        domain = 'testrelm.test'
+        for host in self.existing_nodes:
+            ssh_c = SSHClient(hostname=host, username=self.username, password = self.password)
+            logger.log.info("Set hostname pki%d.%s"%(temp_count, domain))
+            stdin, stdout, stderr = ssh_c.ExecuteCmd('hostnamectl set-hostname pki%d.%s'%(temp_count,domain))
+            stdin, stdout, stderr = ssh_c.ExecuteCmd('nmcli general hostname pki%d.%s'%(temp_count,domain))
+            stdin, stdout, stderr = ssh_c.ExecuteCmd('systemctl restart systemd-hostnamed')
+            temp_count += 1
 
     def copy_host_data(self):
         ''' copy the hosts data to all nodes '''
         (fd, path) = tempfile.mkstemp(prefix='tmphosts')
+        self.get_hosts()
         for ip, hosts in self.etc_host.items():
             with open(path, 'a+') as fd:
                 fd.write("%s %s\n"%(ip, hosts))
@@ -130,16 +142,16 @@ class PkiTest(object):
                         'type': 'pki',
                         'hosts': [
                             {
-                                u'ip': self.existing_nodes[1],
-                                u'name': self.etc_host[self.existing_nodes[1]],
-                                u'external_hostname': self.etc_host[self.existing_nodes[1]],
-                                u'role':'master'
+                                'ip': self.existing_nodes[1],
+                                'name': self.etc_host[self.existing_nodes[1]],
+                                'external_hostname': self.etc_host[self.existing_nodes[1]],
+                                'role':'master'
                             },
                             {
                                 'ip': self.existing_nodes[2],
                                 'name': self.etc_host[self.existing_nodes[2]],
                                 'external_hostname': self.etc_host[self.existing_nodes[2]],
-                                'role':'replica'
+                                'role':'clone'
                             }
                         ]
                     }
@@ -177,55 +189,89 @@ class PkiTest(object):
                     }
                 ]
             }
-        with open('/tmp/mh_cfg', 'w') as yaml_file:
+        with open('/tmp/mh_cfg.yaml', 'w') as yaml_file:
             yaml_file.write(yaml.dump(mydata, default_flow_style=False))
-        return '/tmp/mh_cfg'
+        return '/tmp/mh_cfg.yaml'
 
     def deploy_ssh_keys(self):
         """ Copy ssh keys to all existing nodes """
-        source = self.ssh_keys_priv
+        print("In ssh keys function ",self.existing_nodes)
         for host in self.existing_nodes:
+            print("ssh host = ",host)
             ssh_c = SSHClient(hostname=host, username=self.username,
                               password=self.password)
-            stdout, stderr, exit_status = ssh_c.ExecuteScript("mkdir -p ~/.ssh/")
-            if exit_status is 0:
-                try:
-                    source = self.conf_dict['pytest']['ssh_keys_priv']
-                except KeyError as E:
-                    logger.log.info("%s doesn't exist in conf file",E.message)
-                else:
-                    destination = '/root/.ssh/id_rsa'
-                    logger.log.info("Copying %s to %s on %s" % (source, destination, host))
-                    ssh_c.CopyFiles(source, destination)
-                    stdout, stderr, exit_status = ssh_c.ExecuteScript("chmod 644 /root/.ssh/authorized_keys")
-                    if exit_status is 0:
-                        logger.log.info("Successfully set permission to authorized_keys")
-                        stdout, stderr, exit_status = ssh_c.ExecuteScript("chmod 600 /root/.ssh/id_rsa")
-                        if exit_status is 0:
-                            logger.log.info("Successfull set permissions to /root/.ssh/id_rsa")
-                            stdout, stderr, exit_status = ssh_c.ExecuteScript("chmod 700 /root/.ssh/")
-                            if exit_status is 0:
-                                logger.log.info("Successfully set permissions to /root/.ssh")
-                                stdout, stderr, exit_status = ssh_c.ExecuteScript(
-                                        'echo "StrictHostKeyChecking no" >> /root/.ssh/config')
-                                if exit_status is 0:
-                                    logger.log.info("ssh keys successfully deployed")
-                                else:
-                                    logger.log.info("ssh keys could not be successfully deployed")
-                                    raise Exception
-                            else:
-                                logger.log.info("Unable to set permissions on /root/.ssh")
-                                raise Exception
-                        else:
-                            logger.log.info("Unable to set permissions on /root/.ssh/id_rsa")
-                            raise Exception
-                    else:
-                        logger.log.info("Unable to set permissions on authorized_keys")
-                        raise Exception
-                    return True
-            else:
-                return False
-
+            stdin, stdout, stderr = ssh_c.ExecuteCmd("mkdir -p /root/.ssh/")
+        stdout.close()
+        stderr.close()
+        ssh_c = SSHClient(
+                hostname=self.pytest_node,
+                username = self.username,
+                password = self.password)
+        logger.log.info("Generate ssh keys")
+        stdin, stdout, stderr = ssh_c.ExecuteCmd("ssh-keygen -t rsa -f /root/.ssh/id_rsa -N ''")
+        ssh_c = SSHClient(
+                hostname=self.pytest_node,
+                username = self.username,
+                password = self.password)
+        logger.log.info("Create authorized_keys")
+        stdin, stdout, stderr = ssh_c.ExecuteCmd("cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys")
+        ssh_c = SSHClient(
+                hostname=self.pytest_node,
+                username = self.username,
+                password = self.password)
+        logger.log.info("Set permissions to authorized_keys")
+        stdin, stdout, stderr = ssh_c.ExecuteCmd("chmod 600 /root/.ssh/authorized_keys")
+        ssh_c = SSHClient(
+                hostname=self.pytest_node,
+                username = self.username,
+                password = self.password)
+        scp = SCPClient(ssh_c.get_transport())
+        cwd = os.environ.get('PWD')
+        logger.log.info("Get the ssh keys and authorized_keys file to jslave")
+        sftp = paramiko.SFTPClient.from_transport(ssh_c.get_transport())
+        sftp.get('/root/.ssh/authorized_keys', '%s/authorized_keys'%(cwd))
+        sftp.get('/root/.ssh/id_rsa', '%s/id_rsa'%(cwd))
+        sftp.get('/root/.ssh/id_rsa.pub','%s/id_rsa.pub'%(cwd))
+        if os.path.isfile('%s/authorized_keys'%(cwd)):
+            logger.log.info("authorized_keys file exist")
+        else:
+            logger.log.info("authorized_keys file doesn't exist")
+        if os.path.isfile('%s/id_rsa.pub'%(cwd)):
+            logger.log.info("id_rsa.pub exists")
+        else:
+            logger.log.info("id_rsa.pub doesn't exists")
+        if os.path.isfile('%s/id_rsa'%(cwd)):
+            logger.log.info("id_rsa file exists")
+        else:
+            logger.log.info("id_rsa file doesn't exist")
+        
+        for host in self.existing_nodes:
+            if host is not self.pytest_node:
+                 ssh_c = SSHClient(hostname=host, username=self.username,
+                         password=self.password)
+                 stdout, stderr, exit_status = ssh_c.ExecuteScript('ls -l /root/.ssh')
+                 logger.log.info("Output = %s"%(stdout.getvalue()))
+                 logger.log.info("Command status = %s"%(exit_status))
+                 sftp = paramiko.SFTPClient.from_transport(ssh_c.get_transport())
+                 sftp.put('%s/authorized_keys'%(cwd),'/root/.ssh/authorized_keys')
+                 sftp.put('%s/id_rsa.pub'%(cwd),'/root/.ssh/id_rsa.pub')
+                 sftp.put('%s/id_rsa'%(cwd), '/root/.ssh/id_rsa')
+                 #ssh_c.CopyFiles('%s/authorized_keys'%(cwd),'/root/.ssh/authorized_keys')
+                 #ssh_c.CopyFiles('%s/id_rsa.pub'%(cwd),'/root/.ssh/id_rsa.pub')
+                 #ssh_c.CopyFiles('%s/id_rsa'%(cwd), '/root/.ssh/id_rsa')
+        #remove files
+        files = ['authorized_keys', 'id_rsa.pub', 'id_rsa']
+        for ssh_f in files:
+            logger.log.info('removing %s/%s'%(cwd,ssh_f))
+            os.remove('%s/%s'%(cwd,ssh_f))
+        for host in self.existing_nodes:
+            ssh_c = SSHClient(hostname=host, username=self.username,
+                    password=self.password)
+            ssh_c.ExecuteCmd('chmod 600 /root/.ssh/authorized_keys')
+            ssh_c.ExecuteCmd('chmod 600 /root/.ssh/id_rsa')
+            ssh_c.ExecuteCmd('echo "StrictHostKeyChecking no" >> /root/.ssh/config')
+        stdout.close()
+        stderr.close()
     def copy_extras_repo(self):
         """ Use yum-config-manager to create repo using a repo url """
         #connect to the first existing node
@@ -279,6 +325,19 @@ class PkiTest(object):
                 logger.log.info("Could not install %s on %s"%(pre_reqs_rpms, self.pytest_node))
                 return False
 
+    def copy_test_out_junit(self):
+        """ Getting Junit files"""
+        print("pytest node =",self.pytest_node)
+        ssh_c = SSHClient(
+                hostname=self.pytest_node,
+                username = self.username,
+                password = self.password)
+        logger.log.info("Getting pytest results")
+        cwd = os.environ.get('PWD')
+        remote_file = self.conf_dict['pytest']['pytest_junit_loc']
+        sftp = paramiko.SFTPClient.from_transport(ssh_c.get_transport())
+        sftp.get(remote_file, '%s/junit.xml'%(cwd))
+
     def pytest_setup(self):
         """ Setup pytest automation """
         #connect to host
@@ -300,19 +359,13 @@ class PkiTest(object):
             if exit_status is 0:
                 stdout.close()
                 stderr.close()
-                logger.log.info("Installing pkilib on pytest node %s"%(self.pytest_node))
-                try:
-                    tests_base = self.conf_dict['pytest']['tests_base']
-                except KeyError as Err:
-                    logger.log.info("No %s found in nexus.conf"%(Err.message))
-                    return False
+                logger.log.info("Installing pki-testlib on pytest node %s"%(self.pytest_node))
+                stdout, stderr, exit_status = ssh_c.ExecuteScript("yum install -y pki-base pki-testlib")
+                if exit_status is 0:
+                    logger.log.info("pki-testlib successfully installed")
+                    return True
                 else:
-                    stdout, stderr, exit_status = ssh_c.ExecuteScript("yum install -y pki-testlib")
-                    if exit_status is 0:
-                        logger.log.info("pki-testlib successfully installed")
-                        return True
-                    else:
-                        return False
+                    return False
 
     def run_pytest(self, multihost_yaml_file):
         """ Run pytest command using the marker if provided """
@@ -344,13 +397,12 @@ class PkiTest(object):
             pass
             ttiers = None
         patterns = []
-
         if ttypes is None and ttiers is None:
             logger.log.info("Both test-tier and test-type options are none in CI_MESSAGE")
-            pytest_cmd = "py.test -v --color=yes --junit-xml=%s --multihost-config=%s %s"%(
+            pytest_cmd = "py.test -v -s --color=yes --debug --junit-xml=%s --multihost-config=%s %s"%(
                     pytest_junit_loc, multihost_yaml_file, tests_to_run)
         else:
-            pytest_cmd = "py.test -v --junit-xml=%s --multihost-config=%s %s"%(
+            pytest_cmd = "py.test -v -s --junit-xml=%s --debug --multihost-config=%s %s"%(
                     pytest_junit_loc, multihost_yaml_file, tests_to_run)
         logger.log.info(pytest_cmd)
 
@@ -375,13 +427,18 @@ class PkiTest(object):
                 username = self.username,
                 password = self.password)
         stdout,stderr,exit_status = ssh_c.ExecuteScript(pytest_cmd)
-        if exit_status is 0:
-           print("Script output: ", stdout.getvalue())
-           stdout.close()
-           stderr.close()
-           return True
+        output = stdout.getvalue()
+        error = stderr.getvalue()
+        if error:
+            print("error running script: "), error
+            print("Exit status: "), exit_status
         else:
-            print("Error: ", stderr.getvalue())
-            stdout.close()
-            stderr.close()
-            return False
+            print("Script output: "), output
+
+        
+        try:
+            self.copy_test_out_junit()
+        except IOError:
+            logger.log.info("Junit xml file not found")
+            pass
+
